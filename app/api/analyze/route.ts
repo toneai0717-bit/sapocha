@@ -79,9 +79,9 @@ export async function POST(req: NextRequest) {
       messages: [{ role: "user", content: messageContent }],
     });
 
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
+    const responseText = response.content[0].type === "text" ? response.content[0].text : "";
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
     }
