@@ -61,7 +61,7 @@ const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチで
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, mediaType, profile, text, tone } = await req.json();
+    const { image, mediaType, profile, text, tone, history } = await req.json();
 
     if (!image && !text) {
       return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
@@ -79,6 +79,10 @@ export async function POST(req: NextRequest) {
       ? `\n\n【送信者のプロフィール】\n${safeProfile}\n返信はこの人物の性格・話し方に合わせてください。`
       : "";
     const toneSection = `\n\n【指定トーン】「${safeTone}」で3つのバリエーションを返すこと。`;
+    const safeHistory = typeof history === "string" ? history.trim().slice(0, 3000) : "";
+    const historySection = safeHistory
+      ? `\n\n【これまでの会話の流れ（記憶）】\n${safeHistory}\n上記を踏まえ、すでに話したトピックの繰り返しを避け、会話を自然に発展させること。`
+      : "";
 
     const messageContent = image
       ? [
@@ -102,7 +106,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: "claude-sonnet-4-5",
       max_tokens: 2048,
-      system: SYSTEM_PROMPT + profileSection + toneSection,
+      system: SYSTEM_PROMPT + profileSection + toneSection + historySection,
       messages: [{ role: "user", content: messageContent }],
     });
 

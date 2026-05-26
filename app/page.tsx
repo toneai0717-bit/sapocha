@@ -13,6 +13,12 @@ type Profile = {
   sampleReplies: string;
   freeText: string;
 };
+type Contact = {
+  id: string;
+  name: string;
+  situationHistory: string[];
+  createdAt: number;
+};
 
 const EMPTY_PROFILE: Profile = {
   firstPerson: "",
@@ -23,8 +29,9 @@ const EMPTY_PROFILE: Profile = {
   freeText: "",
 };
 
-
 const PROFILE_KEY = "sapocha_profile_v2";
+const CONTACTS_KEY = "sapocha_contacts_v1";
+const SELECTED_CONTACT_KEY = "sapocha_selected_contact_v1";
 
 function formatProfileForPrompt(p: Profile): string {
   const lines: string[] = [];
@@ -55,6 +62,13 @@ export default function Home() {
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const [savedProfile, setSavedProfile] = useState<Profile>(EMPTY_PROFILE);
+
+  // Contact state
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [newContactName, setNewContactName] = useState("");
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -65,6 +79,10 @@ export default function Home() {
         setSavedProfile(parsed);
         setProfile(parsed);
       }
+      const storedContacts = localStorage.getItem(CONTACTS_KEY);
+      if (storedContacts) setContacts(JSON.parse(storedContacts) as Contact[]);
+      const storedSelected = localStorage.getItem(SELECTED_CONTACT_KEY);
+      if (storedSelected) setSelectedContactId(storedSelected);
     } catch {
       // ignore corrupted storage
     }
@@ -79,6 +97,62 @@ export default function Home() {
   const updateField = (field: keyof Profile, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }));
   };
+
+  const saveContacts = useCallback((updated: Contact[]) => {
+    setContacts(updated);
+    localStorage.setItem(CONTACTS_KEY, JSON.stringify(updated));
+  }, []);
+
+  const addContact = () => {
+    if (!newContactName.trim()) return;
+    const newContact: Contact = {
+      id: Date.now().toString(),
+      name: newContactName.trim(),
+      situationHistory: [],
+      createdAt: Date.now(),
+    };
+    const updated = [...contacts, newContact];
+    saveContacts(updated);
+    setSelectedContactId(newContact.id);
+    localStorage.setItem(SELECTED_CONTACT_KEY, newContact.id);
+    setNewContactName("");
+    setShowAddContact(false);
+  };
+
+  const selectContact = (id: string) => {
+    if (selectedContactId === id) {
+      setSelectedContactId(null);
+      localStorage.removeItem(SELECTED_CONTACT_KEY);
+    } else {
+      setSelectedContactId(id);
+      localStorage.setItem(SELECTED_CONTACT_KEY, id);
+    }
+  };
+
+  const deleteContact = (id: string) => {
+    const updated = contacts.filter((c) => c.id !== id);
+    saveContacts(updated);
+    if (selectedContactId === id) {
+      setSelectedContactId(null);
+      localStorage.removeItem(SELECTED_CONTACT_KEY);
+    }
+  };
+
+  const appendSituation = useCallback((situation: string, currentContacts: Contact[]) => {
+    if (!selectedContactId) return;
+    const updated = currentContacts.map((c) =>
+      c.id === selectedContactId
+        ? { ...c, situationHistory: [...c.situationHistory.slice(-9), situation] }
+        : c
+    );
+    saveContacts(updated);
+  }, [selectedContactId, saveContacts]);
+
+  const getHistoryContext = useCallback((): string => {
+    const contact = contacts.find((c) => c.id === selectedContactId);
+    if (!contact || contact.situationHistory.length === 0) return "";
+    return contact.situationHistory.map((s, i) => `${i + 1}. ${s}`).join("\n");
+  }, [contacts, selectedContactId]);
 
   const handleFile = useCallback((file: File) => {
     const reader = new FileReader();
@@ -120,9 +194,10 @@ export default function Home() {
     setLoading(true);
     setError(null);
     try {
+      const historyContext = getHistoryContext();
       const body = mode === "image"
-        ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone }
-        : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone };
+        ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext }
+        : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext };
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -131,6 +206,18 @@ export default function Home() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
+      // 会話の流れを自動で相手の記憶に蓄積
+      if (data.situation && selectedContactId) {
+        setContacts((prev) => {
+          const updated = prev.map((c) =>
+            c.id === selectedContactId
+              ? { ...c, situationHistory: [...c.situationHistory.slice(-9), data.situation as string] }
+              : c
+          );
+          localStorage.setItem(CONTACTS_KEY, JSON.stringify(updated));
+          return updated;
+        });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
     } finally {
@@ -147,6 +234,8 @@ export default function Home() {
       setError("クリップボードへのコピーに失敗しました");
     }
   };
+
+  const selectedContact = contacts.find((c) => c.id === selectedContactId) ?? null;
 
   const FIELDS: { key: keyof Profile; label: string; placeholder: string; multiline?: boolean }[] = [
     { key: "firstPerson", label: "一人称", placeholder: "俺 / 僕 / 私" },
@@ -165,7 +254,7 @@ export default function Home() {
       <div className="max-w-lg mx-auto px-4 pt-8 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
 
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-start justify-between">
             <h1 className="text-4xl font-black tracking-tight text-slate-900">
               サポ<span className="text-amber-500">チャ</span>
@@ -185,6 +274,55 @@ export default function Home() {
           <p className="text-slate-400 text-xs mt-1 leading-relaxed">
             会話のスクショを選ぶだけで、あなたらしいメッセージ案を3つ提案します。
           </p>
+        </div>
+
+        {/* Contact selector */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            {contacts.map((c) => (
+              <div key={c.id} className="relative group">
+                <button
+                  onClick={() => selectContact(c.id)}
+                  className={`pl-3 pr-7 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                    selectedContactId === c.id
+                      ? "bg-slate-800 text-white border-slate-800"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
+                  }`}
+                >
+                  {c.name}
+                  {c.situationHistory.length > 0 && (
+                    <span className={`ml-1 text-xs ${selectedContactId === c.id ? "text-amber-300" : "text-amber-400"}`}>
+                      ●
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => deleteContact(c.id)}
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
+                    selectedContactId === c.id
+                      ? "text-slate-400 hover:text-white"
+                      : "text-slate-300 hover:text-slate-500"
+                  }`}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setShowAddContact(true)}
+              className="px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-amber-400 hover:text-amber-500 transition-colors bg-white"
+            >
+              ＋ 相手を追加
+            </button>
+          </div>
+          {selectedContact && (
+            <p className="text-xs text-slate-400 mt-1.5">
+              {selectedContact.name}との会話を記憶中
+              {selectedContact.situationHistory.length > 0 && (
+                <span className="ml-1 text-amber-500">（{selectedContact.situationHistory.length}回分）</span>
+              )}
+            </p>
+          )}
         </div>
 
         {/* Profile modal */}
@@ -233,6 +371,42 @@ export default function Home() {
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-white transition-colors"
                 >
                   保存
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Add contact modal */}
+        {showAddContact && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl">
+              <h2 className="text-base font-semibold text-slate-900 mb-1">相手を追加</h2>
+              <p className="text-xs text-slate-500 mb-4">
+                会話の流れを相手ごとに記憶します。
+              </p>
+              <input
+                type="text"
+                value={newContactName}
+                onChange={(e) => setNewContactName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addContact()}
+                placeholder="名前（例：ひなちゃん）"
+                autoFocus
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+              />
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => { setShowAddContact(false); setNewContactName(""); }}
+                  className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={addContact}
+                  disabled={!newContactName.trim()}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 text-white transition-colors"
+                >
+                  追加
                 </button>
               </div>
             </div>
