@@ -5,21 +5,24 @@ import { useState, useCallback, useRef, useEffect } from "react";
 type Reply = { tone: string; message: string };
 type Result = { situation: string; replies: Reply[] };
 
-const TONE_STYLES: Record<string, { bg: string; border: string; badge: string }> = {
+const TONE_CONFIG: Record<string, { bg: string; border: string; badge: string; dot: string }> = {
   自然: {
-    bg: "bg-zinc-800/60",
-    border: "border-zinc-700",
-    badge: "bg-zinc-700 text-zinc-300",
+    bg: "bg-white",
+    border: "border-slate-200",
+    badge: "bg-slate-100 text-slate-600",
+    dot: "bg-slate-400",
   },
   盛り上げる: {
-    bg: "bg-violet-950/40",
-    border: "border-violet-800/60",
-    badge: "bg-violet-800/70 text-violet-200",
+    bg: "bg-violet-50",
+    border: "border-violet-200",
+    badge: "bg-violet-100 text-violet-700",
+    dot: "bg-violet-500",
   },
   積極的: {
-    bg: "bg-rose-950/40",
-    border: "border-rose-800/60",
-    badge: "bg-rose-800/70 text-rose-200",
+    bg: "bg-pink-50",
+    border: "border-pink-200",
+    badge: "bg-pink-100 text-pink-700",
+    dot: "bg-pink-500",
   },
 };
 
@@ -112,53 +115,57 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans" onPaste={handlePaste}>
-      <div className="max-w-xl mx-auto px-4 py-12">
+    <div
+      className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50 text-slate-900 font-sans"
+      onPaste={handlePaste}
+    >
+      <div className="max-w-lg mx-auto px-4 py-10">
 
         {/* Header */}
-        <div className="flex items-start justify-between mb-10">
+        <div className="flex items-start justify-between mb-8">
           <div>
-            <p className="text-xs font-semibold tracking-[0.2em] text-violet-400 uppercase mb-2">
+            <div className="inline-flex items-center gap-1.5 bg-violet-100 text-violet-600 text-xs font-semibold px-3 py-1 rounded-full mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-500 inline-block" />
               Matching App Assistant
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight text-white">サポチャ</h1>
-            <p className="mt-2 text-zinc-400 text-sm">スクショを貼るだけ。返信案を3つ提案します。</p>
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">サポチャ</h1>
+            <p className="mt-1 text-slate-500 text-sm">スクショを貼るだけ。返信案を3つ提案します。</p>
           </div>
           <button
             onClick={() => { setProfile(savedProfile); setShowProfile(true); }}
-            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors mt-1 bg-zinc-800 hover:bg-zinc-700 px-3 py-2 rounded-lg"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-violet-600 transition-colors mt-1 bg-white hover:bg-violet-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
           >
             <span>⚙</span>
             <span>自分設定</span>
-            {savedProfile && <span className="w-1.5 h-1.5 rounded-full bg-violet-400 inline-block" />}
+            {savedProfile && <span className="w-1.5 h-1.5 rounded-full bg-violet-500 inline-block" />}
           </button>
         </div>
 
         {/* Profile modal */}
         {showProfile && (
-          <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-2xl w-full max-w-lg p-6">
-              <h2 className="text-base font-semibold text-white mb-1">自分について</h2>
-              <p className="text-xs text-zinc-500 mb-4">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl">
+              <h2 className="text-base font-semibold text-slate-900 mb-1">自分について</h2>
+              <p className="text-xs text-slate-500 mb-4">
                 年齢・出身・性格・趣味・話し方のクセなど、自由に書いてください。<br />
                 これを元に返信のキャラを合わせます。
               </p>
               <textarea
                 value={profile}
                 onChange={(e) => setProfile(e.target.value)}
-                placeholder="例：32歳・大阪出身・めちゃくちゃ頭良い・ちょっと毒舌・フットサル好き"
-                className="w-full h-36 bg-zinc-800 border border-zinc-700 rounded-xl p-3 text-sm text-zinc-200 placeholder-zinc-600 resize-none focus:outline-none focus:border-violet-600"
+                placeholder="例：32歳・大阪出身・フットサル好き・ちょっと毒舌"
+                className="w-full h-36 bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               />
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => setShowProfile(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm text-zinc-400 hover:text-zinc-200 border border-zinc-700 hover:border-zinc-500 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
                 >
                   キャンセル
                 </button>
                 <button
                   onClick={saveProfile}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-colors"
                 >
                   保存
                 </button>
@@ -169,8 +176,11 @@ export default function Home() {
 
         {/* Upload area */}
         <div
-          className={`relative rounded-2xl border-2 border-dashed transition-colors cursor-pointer
-            ${dragging ? "border-violet-500 bg-violet-950/30" : "border-zinc-700 hover:border-zinc-500 bg-zinc-900/50"}
+          className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm
+            ${dragging
+              ? "border-violet-400 bg-violet-50"
+              : "border-slate-200 hover:border-violet-300 bg-white hover:bg-violet-50/30"
+            }
             ${preview ? "p-3" : "p-10"}`}
           onClick={() => inputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -188,60 +198,65 @@ export default function Home() {
             <img src={preview} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
           ) : (
             <div className="text-center">
-              <div className="text-4xl mb-3">📸</div>
-              <p className="text-zinc-400 text-sm">クリックまたはドラッグ&ドロップ</p>
-              <p className="text-zinc-600 text-xs mt-1">Ctrl+V でペーストも可</p>
+              <div className="w-14 h-14 rounded-2xl bg-violet-100 flex items-center justify-center text-2xl mx-auto mb-3">
+                📸
+              </div>
+              <p className="text-slate-600 text-sm font-medium">クリックまたはドラッグ&ドロップ</p>
+              <p className="text-slate-400 text-xs mt-1">Ctrl+V でペーストも可</p>
             </div>
           )}
         </div>
 
+        {/* Buttons */}
         {preview && (
-          <div className="mt-4 flex gap-2">
+          <div className="mt-3 flex gap-2">
             <button
               onClick={() => { setPreview(null); setResult(null); setError(null); }}
-              className="px-4 py-3 rounded-xl text-sm text-zinc-400 hover:text-zinc-200 border border-zinc-700 hover:border-zinc-500 transition-colors"
+              className="px-4 py-3 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white transition-colors shadow-sm"
             >
               クリア
             </button>
             <button
               onClick={analyze}
               disabled={loading}
-              className="flex-1 py-3 rounded-xl font-semibold text-sm
-                bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-700
-                disabled:text-zinc-500 transition-colors"
+              className="flex-1 py-3 rounded-xl font-semibold text-sm text-white
+                bg-violet-600 hover:bg-violet-500 disabled:bg-slate-200
+                disabled:text-slate-400 transition-colors shadow-sm"
             >
               {loading ? "解析中..." : result ? "再生成" : "返信案を生成する"}
             </button>
           </div>
         )}
 
+        {/* Error */}
         {error && (
-          <div className="mt-4 p-4 rounded-xl bg-red-950/50 border border-red-800/60 text-red-400 text-sm">
+          <div className="mt-4 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
             {error}
           </div>
         )}
 
+        {/* Results */}
         {result && (
-          <div className="mt-6 space-y-3">
-            <p className="text-xs text-zinc-500 leading-relaxed bg-zinc-900 rounded-xl p-3 border border-zinc-800">
-              {result.situation}
-            </p>
+          <div className="mt-5 space-y-3">
+            <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
+              <p className="text-xs text-slate-500 leading-relaxed">{result.situation}</p>
+            </div>
             {result.replies.map((reply, i) => {
-              const style = TONE_STYLES[reply.tone] ?? TONE_STYLES["自然"];
+              const style = TONE_CONFIG[reply.tone] ?? TONE_CONFIG["自然"];
               return (
-                <div key={i} className={`rounded-xl border p-4 ${style.bg} ${style.border}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${style.badge}`}>
+                <div key={i} className={`rounded-xl border p-4 shadow-sm ${style.bg} ${style.border}`}>
+                  <div className="flex items-center justify-between mb-2.5">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${style.badge}`}>
                       {reply.tone}
                     </span>
                     <button
                       onClick={() => copy(reply.message, i)}
-                      className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                      className="text-xs text-slate-400 hover:text-violet-600 transition-colors font-medium"
                     >
                       {copiedIndex === i ? "✓ コピー済み" : "コピー"}
                     </button>
                   </div>
-                  <p className="text-sm text-zinc-200 leading-relaxed">{reply.message}</p>
+                  <p className="text-sm text-slate-700 leading-relaxed">{reply.message}</p>
                 </div>
               );
             })}
