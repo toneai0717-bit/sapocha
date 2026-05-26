@@ -4,29 +4,55 @@ import { useState, useCallback, useRef, useEffect } from "react";
 
 type Reply = { tone: string; message: string };
 type Result = { situation: string; replies: Reply[] };
+type Profile = {
+  firstPerson: string;
+  likes: string;
+  values: string;
+  dialect: string;
+  freeText: string;
+};
 
-const TONE_CONFIG: Record<string, { bg: string; border: string; badge: string; dot: string }> = {
+const EMPTY_PROFILE: Profile = {
+  firstPerson: "",
+  likes: "",
+  values: "",
+  dialect: "",
+  freeText: "",
+};
+
+const TONE_CONFIG: Record<string, { bg: string; border: string; badge: string }> = {
   自然: {
     bg: "bg-white",
     border: "border-stone-200",
     badge: "bg-stone-100 text-stone-600",
-    dot: "bg-stone-400",
   },
   盛り上げる: {
     bg: "bg-amber-50",
     border: "border-amber-200",
     badge: "bg-amber-100 text-amber-700",
-    dot: "bg-amber-500",
   },
   積極的: {
     bg: "bg-rose-50",
     border: "border-rose-200",
     badge: "bg-rose-100 text-rose-700",
-    dot: "bg-rose-500",
   },
 };
 
-const PROFILE_KEY = "sapocha_profile";
+const PROFILE_KEY = "sapocha_profile_v2";
+
+function formatProfileForPrompt(p: Profile): string {
+  const lines: string[] = [];
+  if (p.firstPerson) lines.push(`一人称：${p.firstPerson}`);
+  if (p.likes) lines.push(`好きなこと：${p.likes}`);
+  if (p.values) lines.push(`価値観：${p.values}`);
+  if (p.dialect) lines.push(`方言・話し方：${p.dialect}`);
+  if (p.freeText) lines.push(`その他：${p.freeText}`);
+  return lines.join("\n");
+}
+
+function hasProfile(p: Profile): boolean {
+  return Object.values(p).some((v) => v.trim() !== "");
+}
 
 export default function Home() {
   const [preview, setPreview] = useState<string | null>(null);
@@ -37,20 +63,31 @@ export default function Home() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
-  const [profile, setProfile] = useState("");
-  const [savedProfile, setSavedProfile] = useState("");
+  const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
+  const [savedProfile, setSavedProfile] = useState<Profile>(EMPTY_PROFILE);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(PROFILE_KEY) ?? "";
-    setSavedProfile(stored);
-    setProfile(stored);
+    try {
+      const stored = localStorage.getItem(PROFILE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as Profile;
+        setSavedProfile(parsed);
+        setProfile(parsed);
+      }
+    } catch {
+      // ignore corrupted storage
+    }
   }, []);
 
   const saveProfile = () => {
-    localStorage.setItem(PROFILE_KEY, profile);
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
     setSavedProfile(profile);
     setShowProfile(false);
+  };
+
+  const updateField = (field: keyof Profile, value: string) => {
+    setProfile((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleFile = useCallback((file: File) => {
@@ -96,7 +133,11 @@ export default function Home() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mediaType, profile: savedProfile }),
+        body: JSON.stringify({
+          image: base64,
+          mediaType,
+          profile: formatProfileForPrompt(savedProfile),
+        }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -118,6 +159,14 @@ export default function Home() {
     }
   };
 
+  const FIELDS: { key: keyof Profile; label: string; placeholder: string; multiline?: boolean }[] = [
+    { key: "firstPerson", label: "一人称", placeholder: "俺 / 僕 / 私" },
+    { key: "likes", label: "好きなこと", placeholder: "フットサル、旅行、料理など" },
+    { key: "values", label: "価値観", placeholder: "誠実さを大事にする、自由を重視 など" },
+    { key: "dialect", label: "方言・話し方", placeholder: "関西弁、標準語、テンポ早め など" },
+    { key: "freeText", label: "自由記述", placeholder: "その他、AIに伝えたいことなんでも", multiline: true },
+  ];
+
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 text-stone-900 font-sans"
@@ -137,30 +186,49 @@ export default function Home() {
           </div>
           <button
             onClick={() => { setProfile(savedProfile); setShowProfile(true); }}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors mt-1 bg-white hover:bg-violet-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors mt-1 bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
           >
             <span>⚙</span>
             <span>自分設定</span>
-            {savedProfile && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />}
+            {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />}
           </button>
         </div>
 
         {/* Profile modal */}
         {showProfile && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
               <h2 className="text-base font-semibold text-slate-900 mb-1">自分について</h2>
-              <p className="text-xs text-slate-500 mb-4">
-                年齢・出身・性格・趣味・話し方のクセなど、自由に書いてください。<br />
-                これを元に返信のキャラを合わせます。
+              <p className="text-xs text-slate-500 mb-5">
+                入力した内容をもとに返信のキャラを合わせます。
               </p>
-              <textarea
-                value={profile}
-                onChange={(e) => setProfile(e.target.value)}
-                placeholder="例：32歳・大阪出身・フットサル好き・ちょっと毒舌"
-                className="w-full h-36 bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-              />
-              <div className="flex gap-2 mt-3">
+              <div className="space-y-4">
+                {FIELDS.map(({ key, label, placeholder, multiline }) => (
+                  <div key={key}>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                      {label}
+                    </label>
+                    {multiline ? (
+                      <textarea
+                        value={profile[key]}
+                        onChange={(e) => updateField(key, e.target.value)}
+                        placeholder={placeholder}
+                        rows={3}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        value={profile[key]}
+                        onChange={(e) => updateField(key, e.target.value)}
+                        placeholder={placeholder}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-5">
                 <button
                   onClick={() => setShowProfile(false)}
                   className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
