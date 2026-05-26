@@ -9,6 +9,7 @@ type Profile = {
   likes: string;
   values: string;
   dialect: string;
+  sampleReplies: string;
   freeText: string;
 };
 
@@ -17,6 +18,7 @@ const EMPTY_PROFILE: Profile = {
   likes: "",
   values: "",
   dialect: "",
+  sampleReplies: "",
   freeText: "",
 };
 
@@ -46,6 +48,7 @@ function formatProfileForPrompt(p: Profile): string {
   if (p.likes) lines.push(`好きなこと：${p.likes}`);
   if (p.values) lines.push(`価値観：${p.values}`);
   if (p.dialect) lines.push(`方言・話し方：${p.dialect}`);
+  if (p.sampleReplies) lines.push(`【返信スタイルのサンプル（このトーン・文体・テンションを完全に真似すること）】\n${p.sampleReplies}`);
   if (p.freeText) lines.push(`その他：${p.freeText}`);
   return lines.join("\n");
 }
@@ -165,6 +168,7 @@ export default function Home() {
     { key: "likes", label: "好きなこと", placeholder: "フットサル、旅行、料理など" },
     { key: "values", label: "価値観", placeholder: "誠実さを大事にする、自由を重視 など" },
     { key: "dialect", label: "方言・話し方", placeholder: "関西弁、標準語、テンポ早め など" },
+    { key: "sampleReplies", label: "自分の返信サンプル", placeholder: "実際に送ったメッセージをそのまま貼ってください\n例：「それ面白そうやん！どこ行ったん？」", multiline: true },
     { key: "freeText", label: "自由記述", placeholder: "その他、AIに伝えたいことなんでも", multiline: true },
   ];
 
