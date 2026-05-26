@@ -19,6 +19,8 @@ const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチで
 - 盛り上げる：笑いや共感を狙う。軽いノリで場を温める。
 - 積極的：デートや次の約束に少し近づける。ただし「将来」「一緒に住む」「料理作って」など重い表現は絶対NG。あくまで「今度会いたい」レベルに留める。
 
+【重要】指定されたトーンで3つのバリエーションを返すこと。3つは同じトーンで、表現・切り口・言い回しを変えた別案にする。
+
 【文体ミラーリング（最重要）】
 相手の最新メッセージを分析して、返信を完全に合わせること：
 1. 文字数：相手のメッセージとほぼ同じ文字数にする。相手が短ければ短く、長ければ長く。
@@ -34,15 +36,15 @@ const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチで
 {
   "situation": "会話の状況を1〜2文で",
   "replies": [
-    { "tone": "自然", "message": "返信文" },
-    { "tone": "盛り上げる", "message": "返信文" },
-    { "tone": "積極的", "message": "返信文" }
+    { "message": "返信文1" },
+    { "message": "返信文2" },
+    { "message": "返信文3" }
   ]
 }`;
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, mediaType, profile, text } = await req.json();
+    const { image, mediaType, profile, text, tone } = await req.json();
 
     if (!image && !text) {
       return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
@@ -55,9 +57,11 @@ export async function POST(req: NextRequest) {
     }
 
     const safeProfile = typeof profile === "string" ? profile.trim().slice(0, 500) : "";
+    const safeTone = ["自然", "盛り上げる", "積極的"].includes(tone) ? tone : "自然";
     const profileSection = safeProfile
       ? `\n\n【送信者のプロフィール】\n${safeProfile}\n返信はこの人物の性格・話し方に合わせてください。`
       : "";
+    const toneSection = `\n\n【指定トーン】「${safeTone}」で3つのバリエーションを返すこと。`;
 
     const messageContent = image
       ? [
@@ -81,7 +85,7 @@ export async function POST(req: NextRequest) {
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
-      system: SYSTEM_PROMPT + profileSection,
+      system: SYSTEM_PROMPT + profileSection + toneSection,
       messages: [{ role: "user", content: messageContent }],
     });
 

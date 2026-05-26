@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 
-type Reply = { tone: string; message: string };
+type Tone = "自然" | "盛り上げる" | "積極的";
+type Reply = { message: string };
 type Result = { situation: string; replies: Reply[] };
 type Profile = {
   firstPerson: string;
@@ -22,23 +23,6 @@ const EMPTY_PROFILE: Profile = {
   freeText: "",
 };
 
-const TONE_CONFIG: Record<string, { bg: string; border: string; badge: string }> = {
-  自然: {
-    bg: "bg-white",
-    border: "border-stone-200",
-    badge: "bg-stone-100 text-stone-600",
-  },
-  盛り上げる: {
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    badge: "bg-amber-100 text-amber-700",
-  },
-  積極的: {
-    bg: "bg-rose-50",
-    border: "border-rose-200",
-    badge: "bg-rose-100 text-rose-700",
-  },
-};
 
 const PROFILE_KEY = "sapocha_profile_v2";
 
@@ -59,6 +43,7 @@ function hasProfile(p: Profile): boolean {
 
 export default function Home() {
   const [mode, setMode] = useState<"image" | "text">("image");
+  const [tone, setTone] = useState<Tone>("自然");
   const [preview, setPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<string>("image/jpeg");
   const [conversationText, setConversationText] = useState<string>("");
@@ -136,8 +121,8 @@ export default function Home() {
     setError(null);
     try {
       const body = mode === "image"
-        ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile) }
-        : { text: conversationText, profile: formatProfileForPrompt(savedProfile) };
+        ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone }
+        : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone };
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -255,7 +240,7 @@ export default function Home() {
         )}
 
         {/* Mode toggle */}
-        <div className="flex gap-2 mb-4 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
+        <div className="flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
           {(["image", "text"] as const).map((m) => (
             <button
               key={m}
@@ -269,6 +254,26 @@ export default function Home() {
               {m === "image" ? "📸 スクショ" : "✏️ テキスト"}
             </button>
           ))}
+        </div>
+
+        {/* Tone selector */}
+        <div className="flex gap-2 mb-4">
+          {(["自然", "盛り上げる", "積極的"] as const).map((t) => {
+            const icons = { "自然": "💬", "盛り上げる": "🔥", "積極的": "💘" };
+            return (
+              <button
+                key={t}
+                onClick={() => { setTone(t); setResult(null); }}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                  tone === t
+                    ? "bg-slate-800 text-white border-slate-800"
+                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
+                }`}
+              >
+                {icons[t]} {t}
+              </button>
+            );
+          })}
         </div>
 
         {/* Image mode */}
@@ -371,25 +376,22 @@ export default function Home() {
             <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
               <p className="text-xs text-slate-500 leading-relaxed">{result.situation}</p>
             </div>
-            {result.replies.map((reply, i) => {
-              const style = TONE_CONFIG[reply.tone] ?? TONE_CONFIG["自然"];
-              return (
-                <div key={i} className={`rounded-xl border p-4 shadow-sm ${style.bg} ${style.border}`}>
-                  <div className="flex items-center justify-between mb-2.5">
-                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${style.badge}`}>
-                      {reply.tone}
-                    </span>
-                    <button
-                      onClick={() => copy(reply.message, i)}
-                      className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-amber-50 active:bg-amber-100"
-                    >
-                      {copiedIndex === i ? "✓ コピー済み" : "コピー"}
-                    </button>
-                  </div>
-                  <p className="text-sm text-slate-700 leading-relaxed">{reply.message}</p>
+            {result.replies.map((reply, i) => (
+              <div key={i} className="rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+                    案 {i + 1}
+                  </span>
+                  <button
+                    onClick={() => copy(reply.message, i)}
+                    className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-amber-50 active:bg-amber-100"
+                  >
+                    {copiedIndex === i ? "✓ コピー済み" : "コピー"}
+                  </button>
                 </div>
-              );
-            })}
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{reply.message}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
