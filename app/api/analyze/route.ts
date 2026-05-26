@@ -18,16 +18,20 @@ const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチで
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, mediaType } = await req.json();
+    const { image, mediaType, profile } = await req.json();
 
     if (!image) {
       return NextResponse.json({ error: "画像がありません" }, { status: 400 });
     }
 
+    const profileSection = profile?.trim()
+      ? `\n\n【送信者のプロフィール】\n${profile}\n返信はこの人物の性格・話し方に合わせてください。`
+      : "";
+
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: SYSTEM_PROMPT + profileSection,
       messages: [
         {
           role: "user",
