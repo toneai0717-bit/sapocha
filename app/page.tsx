@@ -8,21 +8,21 @@ type Result = { situation: string; replies: Reply[] };
 const TONE_CONFIG: Record<string, { bg: string; border: string; badge: string; dot: string }> = {
   自然: {
     bg: "bg-white",
-    border: "border-slate-200",
-    badge: "bg-slate-100 text-slate-600",
-    dot: "bg-slate-400",
+    border: "border-stone-200",
+    badge: "bg-stone-100 text-stone-600",
+    dot: "bg-stone-400",
   },
   盛り上げる: {
-    bg: "bg-violet-50",
-    border: "border-violet-200",
-    badge: "bg-violet-100 text-violet-700",
-    dot: "bg-violet-500",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    badge: "bg-amber-100 text-amber-700",
+    dot: "bg-amber-500",
   },
   積極的: {
-    bg: "bg-pink-50",
-    border: "border-pink-200",
-    badge: "bg-pink-100 text-pink-700",
-    dot: "bg-pink-500",
+    bg: "bg-rose-50",
+    border: "border-rose-200",
+    badge: "bg-rose-100 text-rose-700",
+    dot: "bg-rose-500",
   },
 };
 
@@ -116,7 +116,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50 text-slate-900 font-sans"
+      className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 text-stone-900 font-sans"
       onPaste={handlePaste}
     >
       <div className="max-w-lg mx-auto px-4 py-10">
@@ -124,8 +124,8 @@ export default function Home() {
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
           <div>
-            <div className="inline-flex items-center gap-1.5 bg-violet-100 text-violet-600 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-violet-500 inline-block" />
+            <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
               Matching App Assistant
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">サポチャ</h1>
@@ -133,11 +133,11 @@ export default function Home() {
           </div>
           <button
             onClick={() => { setProfile(savedProfile); setShowProfile(true); }}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-violet-600 transition-colors mt-1 bg-white hover:bg-violet-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors mt-1 bg-white hover:bg-violet-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
           >
             <span>⚙</span>
             <span>自分設定</span>
-            {savedProfile && <span className="w-1.5 h-1.5 rounded-full bg-violet-500 inline-block" />}
+            {savedProfile && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />}
           </button>
         </div>
 
@@ -154,7 +154,7 @@ export default function Home() {
                 value={profile}
                 onChange={(e) => setProfile(e.target.value)}
                 placeholder="例：32歳・大阪出身・フットサル好き・ちょっと毒舌"
-                className="w-full h-36 bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                className="w-full h-36 bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
               />
               <div className="flex gap-2 mt-3">
                 <button
@@ -165,7 +165,7 @@ export default function Home() {
                 </button>
                 <button
                   onClick={saveProfile}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-colors"
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-white transition-colors"
                 >
                   保存
                 </button>
@@ -178,8 +178,8 @@ export default function Home() {
         <div
           className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm
             ${dragging
-              ? "border-violet-400 bg-violet-50"
-              : "border-slate-200 hover:border-violet-300 bg-white hover:bg-violet-50/30"
+              ? "border-amber-400 bg-amber-50"
+              : "border-slate-200 hover:border-amber-300 bg-white hover:bg-amber-50/30"
             }
             ${preview ? "p-3" : "p-10"}`}
           onClick={() => inputRef.current?.click()}
@@ -198,7 +198,7 @@ export default function Home() {
             <img src={preview} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
           ) : (
             <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-violet-100 flex items-center justify-center text-2xl mx-auto mb-3">
+              <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-2xl mx-auto mb-3">
                 📸
               </div>
               <p className="text-slate-600 text-sm font-medium">クリックまたはドラッグ&ドロップ</p>
@@ -220,7 +220,7 @@ export default function Home() {
               onClick={analyze}
               disabled={loading}
               className="flex-1 py-3 rounded-xl font-semibold text-sm text-white
-                bg-violet-600 hover:bg-violet-500 disabled:bg-slate-200
+                bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200
                 disabled:text-slate-400 transition-colors shadow-sm"
             >
               {loading ? "解析中..." : result ? "再生成" : "返信案を生成する"}
@@ -251,7 +251,7 @@ export default function Home() {
                     </span>
                     <button
                       onClick={() => copy(reply.message, i)}
-                      className="text-xs text-slate-400 hover:text-violet-600 transition-colors font-medium"
+                      className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium"
                     >
                       {copiedIndex === i ? "✓ コピー済み" : "コピー"}
                     </button>
