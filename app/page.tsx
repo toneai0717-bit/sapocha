@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 type Tone = "自然" | "盛り上げる" | "積極的";
-type Reply = { message: string };
+type Reply = { message: string; reason?: string };
 type Result = { situation: string; replies: Reply[] };
 type Profile = {
   firstPerson: string;
@@ -380,7 +380,7 @@ export default function Home() {
               <div key={i} className="rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
                 <div className="flex items-center justify-between mb-2.5">
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
-                    案 {i + 1}
+                    {reply.reason ?? `案 ${i + 1}`}
                   </span>
                   <button
                     onClick={() => copy(reply.message, i)}

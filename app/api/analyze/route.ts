@@ -40,9 +40,9 @@ const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチで
 {
   "situation": "会話の状況を1〜2文で",
   "replies": [
-    { "message": "返信文1" },
-    { "message": "返信文2" },
-    { "message": "返信文3" }
+    { "message": "返信文1", "reason": "このパターンを選ぶ理由を10文字以内で" },
+    { "message": "返信文2", "reason": "このパターンを選ぶ理由を10文字以内で" },
+    { "message": "返信文3", "reason": "このパターンを選ぶ理由を10文字以内で" }
   ]
 }`;
 
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
         ];
 
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-5",
       max_tokens: 1024,
       system: SYSTEM_PROMPT + profileSection + toneSection,
       messages: [{ role: "user", content: messageContent }],
