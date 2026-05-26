@@ -36,45 +36,47 @@ const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチで
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, mediaType, profile } = await req.json();
+    const { image, mediaType, profile, text } = await req.json();
 
-    if (!image || typeof image !== "string") {
-      return NextResponse.json({ error: "画像がありません" }, { status: 400 });
+    if (!image && !text) {
+      return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
     }
-    if (image.length > MAX_BASE64_LENGTH) {
+    if (image && image.length > MAX_BASE64_LENGTH) {
       return NextResponse.json({ error: "画像が大きすぎます" }, { status: 413 });
     }
+    if (text && typeof text === "string" && text.trim().length < 5) {
+      return NextResponse.json({ error: "会話が短すぎます" }, { status: 400 });
+    }
 
-    const safeMediaType = ALLOWED_MEDIA_TYPES.has(mediaType) ? mediaType : "image/jpeg";
     const safeProfile = typeof profile === "string" ? profile.trim().slice(0, 500) : "";
-
     const profileSection = safeProfile
       ? `\n\n【送信者のプロフィール】\n${safeProfile}\n返信はこの人物の性格・話し方に合わせてください。`
       : "";
+
+    const messageContent = image
+      ? [
+          {
+            type: "image" as const,
+            source: {
+              type: "base64" as const,
+              media_type: (ALLOWED_MEDIA_TYPES.has(mediaType) ? mediaType : "image/jpeg") as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+              data: image,
+            },
+          },
+          { type: "text" as const, text: "このスクリーンショットの会話を分析して、返信案を3つ提案してください。" },
+        ]
+      : [
+          {
+            type: "text" as const,
+            text: `以下のマッチングアプリの会話テキストを分析して、返信案を3つ提案してください。\n\n【会話】\n${(text as string).trim().slice(0, 2000)}`,
+          },
+        ];
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 1024,
       system: SYSTEM_PROMPT + profileSection,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: safeMediaType,
-                data: image,
-              },
-            },
-            {
-              type: "text",
-              text: "このスクリーンショットの会話を分析して、返信案を3つ提案してください。",
-            },
-          ],
-        },
-      ],
+      messages: [{ role: "user", content: messageContent }],
     });
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";

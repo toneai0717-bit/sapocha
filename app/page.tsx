@@ -55,8 +55,10 @@ function hasProfile(p: Profile): boolean {
 }
 
 export default function Home() {
+  const [mode, setMode] = useState<"image" | "text">("image");
   const [preview, setPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<string>("image/jpeg");
+  const [conversationText, setConversationText] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -125,19 +127,18 @@ export default function Home() {
   );
 
   const analyze = async () => {
-    if (!preview) return;
+    if (mode === "image" && !preview) return;
+    if (mode === "text" && conversationText.trim().length < 5) return;
     setLoading(true);
     setError(null);
     try {
-      const base64 = preview.split(",")[1];
+      const body = mode === "image"
+        ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile) }
+        : { text: conversationText, profile: formatProfileForPrompt(savedProfile) };
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: base64,
-          mediaType,
-          profile: formatProfileForPrompt(savedProfile),
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -249,58 +250,108 @@ export default function Home() {
           </div>
         )}
 
-        {/* Upload area */}
-        <div
-          className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm
-            ${dragging
-              ? "border-amber-400 bg-amber-50"
-              : "border-slate-200 hover:border-amber-300 bg-white hover:bg-amber-50/30"
-            }
-            ${preview ? "p-3" : "p-10"}`}
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={handleDrop}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-          />
-          {preview ? (
-            <img src={preview} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
-          ) : (
-            <div className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-3xl mx-auto mb-3">
-                📸
-              </div>
-              <p className="text-slate-600 text-sm font-medium">タップしてスクショを選ぶ</p>
-              <p className="text-slate-400 text-xs mt-1 hidden sm:block">ドラッグ&ドロップ・Ctrl+V でも可</p>
-            </div>
-          )}
+        {/* Mode toggle */}
+        <div className="flex gap-2 mb-4 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
+          {(["image", "text"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => { setMode(m); setResult(null); setError(null); }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                mode === m
+                  ? "bg-amber-500 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {m === "image" ? "📸 スクショ" : "✏️ テキスト"}
+            </button>
+          ))}
         </div>
 
-        {/* Buttons */}
-        {preview && (
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={() => { setPreview(null); setResult(null); setError(null); }}
-              className="px-4 py-4 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white transition-colors shadow-sm"
+        {/* Image mode */}
+        {mode === "image" && (
+          <>
+            <div
+              className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm
+                ${dragging
+                  ? "border-amber-400 bg-amber-50"
+                  : "border-slate-200 hover:border-amber-300 bg-white hover:bg-amber-50/30"
+                }
+                ${preview ? "p-3" : "p-10"}`}
+              onClick={() => inputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
             >
-              クリア
-            </button>
-            <button
-              onClick={analyze}
-              disabled={loading}
-              className="flex-1 py-4 rounded-xl font-semibold text-sm text-white
-                bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200
-                disabled:text-slate-400 transition-colors shadow-sm"
-            >
-              {loading ? "解析中..." : result ? "再生成" : "返信案を生成する"}
-            </button>
-          </div>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+              />
+              {preview ? (
+                <img src={preview} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
+              ) : (
+                <div className="text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-3xl mx-auto mb-3">
+                    📸
+                  </div>
+                  <p className="text-slate-600 text-sm font-medium">タップしてスクショを選ぶ</p>
+                  <p className="text-slate-400 text-xs mt-1 hidden sm:block">ドラッグ&ドロップ・Ctrl+V でも可</p>
+                </div>
+              )}
+            </div>
+            {preview && (
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => { setPreview(null); setResult(null); setError(null); }}
+                  className="px-4 py-4 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white transition-colors shadow-sm"
+                >
+                  クリア
+                </button>
+                <button
+                  onClick={analyze}
+                  disabled={loading}
+                  className="flex-1 py-4 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
+                >
+                  {loading ? "解析中..." : result ? "再生成" : "返信案を生成する"}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Text mode */}
+        {mode === "text" && (
+          <>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
+              <p className="text-xs text-slate-400 mb-2">会話をそのままコピペしてください</p>
+              <textarea
+                value={conversationText}
+                onChange={(e) => { setConversationText(e.target.value); setResult(null); }}
+                placeholder={"相手: こんにちは！\n自分: はじめまして！\n相手: 趣味は何ですか？"}
+                rows={8}
+                className="w-full text-sm text-slate-800 placeholder-slate-300 resize-none focus:outline-none leading-relaxed"
+              />
+            </div>
+            <div className="mt-3 flex gap-2">
+              {conversationText && (
+                <button
+                  onClick={() => { setConversationText(""); setResult(null); setError(null); }}
+                  className="px-4 py-4 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white transition-colors shadow-sm"
+                >
+                  クリア
+                </button>
+              )}
+              <button
+                onClick={analyze}
+                disabled={loading || conversationText.trim().length < 5}
+                className="flex-1 py-4 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
+              >
+                {loading ? "解析中..." : result ? "再生成" : "返信案を生成する"}
+              </button>
+            </div>
+          </>
         )}
 
         {/* Error */}
