@@ -196,15 +196,23 @@ export default function Home() {
         </div>
 
         {preview && (
-          <button
-            onClick={analyze}
-            disabled={loading}
-            className="mt-4 w-full py-3 rounded-xl font-semibold text-sm
-              bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-700
-              disabled:text-zinc-500 transition-colors"
-          >
-            {loading ? "解析中..." : "返信案を生成する"}
-          </button>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => { setPreview(null); setResult(null); setError(null); }}
+              className="px-4 py-3 rounded-xl text-sm text-zinc-400 hover:text-zinc-200 border border-zinc-700 hover:border-zinc-500 transition-colors"
+            >
+              クリア
+            </button>
+            <button
+              onClick={analyze}
+              disabled={loading}
+              className="flex-1 py-3 rounded-xl font-semibold text-sm
+                bg-violet-600 hover:bg-violet-500 disabled:bg-zinc-700
+                disabled:text-zinc-500 transition-colors"
+            >
+              {loading ? "解析中..." : result ? "再生成" : "返信案を生成する"}
+            </button>
+          </div>
         )}
 
         {error && (
