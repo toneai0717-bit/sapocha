@@ -1,0 +1,19 @@
+{
+  "name": "サポチャ",
+  "short_name": "サポチャ",
+  "description": "マッチングアプリの返信をAIがサポート",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffbeb",
+  "theme_color": "#f59e0b",
+  "orientation": "portrait-primary",
+  "lang": "ja",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

@@ -172,7 +172,7 @@ export default function Home() {
       className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 text-stone-900 font-sans"
       onPaste={handlePaste}
     >
-      <div className="max-w-lg mx-auto px-4 py-10">
+      <div className="max-w-lg mx-auto px-4 pt-8 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
 
         {/* Header */}
         <div className="mb-8">
@@ -193,7 +193,7 @@ export default function Home() {
             マッチングアプリの返信、AIがサポート。
           </p>
           <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-            会話のスクショを貼るだけで、あなたらしいメッセージ案を3つ提案します。
+            会話のスクショを選ぶだけで、あなたらしいメッセージ案を3つ提案します。
           </p>
         </div>
 
@@ -273,11 +273,11 @@ export default function Home() {
             <img src={preview} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
           ) : (
             <div className="text-center">
-              <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-2xl mx-auto mb-3">
+              <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-3xl mx-auto mb-3">
                 📸
               </div>
-              <p className="text-slate-600 text-sm font-medium">クリックまたはドラッグ&ドロップ</p>
-              <p className="text-slate-400 text-xs mt-1">Ctrl+V でペーストも可</p>
+              <p className="text-slate-600 text-sm font-medium">タップしてスクショを選ぶ</p>
+              <p className="text-slate-400 text-xs mt-1 hidden sm:block">ドラッグ&ドロップ・Ctrl+V でも可</p>
             </div>
           )}
         </div>
@@ -287,14 +287,14 @@ export default function Home() {
           <div className="mt-3 flex gap-2">
             <button
               onClick={() => { setPreview(null); setResult(null); setError(null); }}
-              className="px-4 py-3 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white transition-colors shadow-sm"
+              className="px-4 py-4 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white transition-colors shadow-sm"
             >
               クリア
             </button>
             <button
               onClick={analyze}
               disabled={loading}
-              className="flex-1 py-3 rounded-xl font-semibold text-sm text-white
+              className="flex-1 py-4 rounded-xl font-semibold text-sm text-white
                 bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200
                 disabled:text-slate-400 transition-colors shadow-sm"
             >
@@ -326,7 +326,7 @@ export default function Home() {
                     </span>
                     <button
                       onClick={() => copy(reply.message, i)}
-                      className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium"
+                      className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-amber-50 active:bg-amber-100"
                     >
                       {copiedIndex === i ? "✓ コピー済み" : "コピー"}
                     </button>
