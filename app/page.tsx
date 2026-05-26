@@ -108,10 +108,14 @@ export default function Home() {
     }
   };
 
-  const copy = (text: string, index: number) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 1500);
+  const copy = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 1500);
+    } catch {
+      setError("クリップボードへのコピーに失敗しました");
+    }
   };
 
   return (

@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+const MAX_BASE64_LENGTH = 5 * 1024 * 1024 * 1.4;
+
 const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチです。
 スクリーンショットの会話を読み取り、「相手（自分ではない方）の最新メッセージ」に対する返信案を3つ提案してください。
 
@@ -35,12 +38,18 @@ export async function POST(req: NextRequest) {
   try {
     const { image, mediaType, profile } = await req.json();
 
-    if (!image) {
+    if (!image || typeof image !== "string") {
       return NextResponse.json({ error: "画像がありません" }, { status: 400 });
     }
+    if (image.length > MAX_BASE64_LENGTH) {
+      return NextResponse.json({ error: "画像が大きすぎます" }, { status: 413 });
+    }
 
-    const profileSection = profile?.trim()
-      ? `\n\n【送信者のプロフィール】\n${profile}\n返信はこの人物の性格・話し方に合わせてください。`
+    const safeMediaType = ALLOWED_MEDIA_TYPES.has(mediaType) ? mediaType : "image/jpeg";
+    const safeProfile = typeof profile === "string" ? profile.trim().slice(0, 500) : "";
+
+    const profileSection = safeProfile
+      ? `\n\n【送信者のプロフィール】\n${safeProfile}\n返信はこの人物の性格・話し方に合わせてください。`
       : "";
 
     const response = await client.messages.create({
@@ -55,7 +64,7 @@ export async function POST(req: NextRequest) {
               type: "image",
               source: {
                 type: "base64",
-                media_type: mediaType ?? "image/jpeg",
+                media_type: safeMediaType,
                 data: image,
               },
             },
@@ -75,10 +84,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
     }
 
-    const result = JSON.parse(jsonMatch[0]);
-    return NextResponse.json(result);
+    try {
+      const result = JSON.parse(jsonMatch[0]);
+      return NextResponse.json(result);
+    } catch (parseError) {
+      console.error("JSON parse failed:", parseError instanceof Error ? parseError.message : "unknown");
+      return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
+    }
   } catch (error) {
-    console.error(error);
+    console.error("API error:", error instanceof Error ? error.message : "unknown");
     return NextResponse.json({ error: "サーバーエラーが発生しました" }, { status: 500 });
   }
 }
