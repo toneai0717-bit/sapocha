@@ -175,23 +175,26 @@ export default function Home() {
       <div className="max-w-lg mx-auto px-4 py-10">
 
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-              Matching App Assistant
-            </div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">サポチャ</h1>
-            <p className="mt-1 text-slate-500 text-sm">スクショを貼るだけ。返信案を3つ提案します。</p>
+        <div className="mb-8">
+          <div className="flex items-start justify-between">
+            <h1 className="text-4xl font-black tracking-tight text-slate-900">
+              サポ<span className="text-amber-500">チャ</span>
+            </h1>
+            <button
+              onClick={() => { setProfile(savedProfile); setShowProfile(true); }}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors mt-1.5 bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
+            >
+              <span>⚙</span>
+              <span>自分設定</span>
+              {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />}
+            </button>
           </div>
-          <button
-            onClick={() => { setProfile(savedProfile); setShowProfile(true); }}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors mt-1 bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
-          >
-            <span>⚙</span>
-            <span>自分設定</span>
-            {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />}
-          </button>
+          <p className="mt-2 text-slate-700 text-sm font-medium leading-relaxed">
+            マッチングアプリの返信、AIがサポート。
+          </p>
+          <p className="text-slate-400 text-xs mt-1 leading-relaxed">
+            会話のスクショを貼るだけで、あなたらしいメッセージ案を3つ提案します。
+          </p>
         </div>
 
         {/* Profile modal */}
