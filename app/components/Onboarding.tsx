@@ -116,7 +116,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           <h1 className="text-5xl font-black tracking-tight text-slate-900 mb-2">
             サポ<span className="text-amber-500">チャ</span>
           </h1>
-          <p className="text-slate-500 text-sm mb-10">プロフィールから返信、デートまで全部サポート。</p>
+          <p className="text-slate-500 text-sm mb-10">会うまでは、全部サポート。その先は、君の番。</p>
 
           <div className="space-y-2.5 mb-10 text-left">
             {[

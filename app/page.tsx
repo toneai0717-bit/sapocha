@@ -402,7 +402,7 @@ export default function Home() {
             </div>
           </div>
           <p className="mt-2 text-slate-700 text-sm font-medium leading-relaxed">
-            プロフィールから返信、デートまで全部サポート。
+            会うまでは、全部サポート。
           </p>
         </div>
 
