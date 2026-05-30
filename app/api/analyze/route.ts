@@ -51,28 +51,31 @@ const DATE_PROMPT = `あなたはマッチングアプリのデートプラン�
     {
       "theme": "コースのテーマ（10文字以内）",
       "spots": [
-        { "name": "スポット名", "description": "なぜここか・何をするか" },
-        { "name": "スポット名", "description": "なぜここか・何をするか" },
-        { "name": "スポット名", "description": "なぜここか・何をするか" }
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用（例：〜1,000円）" },
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用" },
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用" }
       ],
+      "totalCost": "コース合計の目安費用",
       "point": "このコースの決め手を15文字以内で"
     },
     {
       "theme": "コースのテーマ（10文字以内）",
       "spots": [
-        { "name": "スポット名", "description": "なぜここか・何をするか" },
-        { "name": "スポット名", "description": "なぜここか・何をするか" },
-        { "name": "スポット名", "description": "なぜここか・何をするか" }
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用" },
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用" },
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用" }
       ],
+      "totalCost": "コース合計の目安費用",
       "point": "このコースの決め手を15文字以内で"
     },
     {
       "theme": "コースのテーマ（10文字以内）",
       "spots": [
-        { "name": "スポット名", "description": "なぜここか・何をするか" },
-        { "name": "スポット名", "description": "なぜここか・何をするか" },
-        { "name": "スポット名", "description": "なぜここか・何をするか" }
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用" },
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用" },
+        { "name": "スポット名", "description": "なぜここか・何をするか", "cost": "目安費用" }
       ],
+      "totalCost": "コース合計の目安費用",
       "point": "このコースの決め手を15文字以内で"
     }
   ]
@@ -110,7 +113,7 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコ
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, mediaType, profile, text, tone, history, mode, area } = await req.json();
+    const { image, mediaType, profile, text, tone, history, mode, area, dateTime, dateInterests, dateBudget } = await req.json();
     const safeMode = ["reply", "topics", "date"].includes(mode) ? mode : "reply";
 
     if (!image && !text) {
@@ -139,14 +142,18 @@ export async function POST(req: NextRequest) {
       systemPrompt = TOPICS_PROMPT + profileSection;
       userInstruction = "このスクリーンショットの会話を分析して、実際に会ったときに話すと盛り上がる話題を5つ提案してください。";
     } else if (safeMode === "date") {
-      const profileSection = safeProfile
-        ? `\n\n【自分のプロフィール】\n${safeProfile}`
-        : "";
-      const areaSection = safeArea
-        ? `\n\n【エリア指定】${safeArea}周辺で提案してください。`
-        : "";
-      systemPrompt = DATE_PROMPT + profileSection + areaSection;
-      userInstruction = "このスクリーンショットの会話を分析して、デートコースを3つ提案してください。";
+      const safeDateTime = typeof dateTime === "string" ? dateTime.slice(0, 10) : "夕方";
+      const safeDateInterests = typeof dateInterests === "string" ? dateInterests.slice(0, 200) : "";
+      const safeDateBudget = typeof dateBudget === "string" ? dateBudget.slice(0, 20) : "";
+      const profileSection = safeProfile ? `\n\n【自分のプロフィール】\n${safeProfile}` : "";
+      const condSection = [
+        safeArea && `エリア：${safeArea}`,
+        `時間帯：${safeDateTime}`,
+        safeDateInterests && `相手の好きなもの・こと：${safeDateInterests}`,
+        safeDateBudget && `予算（おひとり様）：${safeDateBudget}`,
+      ].filter(Boolean).join("\n");
+      systemPrompt = DATE_PROMPT + profileSection + `\n\n【デート条件】\n${condSection}`;
+      userInstruction = "上記の条件でデートコースを3つ提案してください。各コースにスポットを3箇所と、目安の費用を含めてください。";
     } else {
       const profileSection = safeProfile
         ? `\n\n【送信者のプロフィール】\n${safeProfile}\n返信はこの人物の性格・話し方に合わせてください。`

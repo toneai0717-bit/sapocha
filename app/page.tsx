@@ -7,8 +7,8 @@ type FeatureMode = "reply" | "topics" | "date";
 type Tone = "自然" | "盛り上げる" | "積極的";
 type Reply = { message: string; reason?: string };
 type Topic = { title: string; starter: string; why: string };
-type DateSpot = { name: string; description: string };
-type DateCourse = { theme: string; spots: DateSpot[]; point: string };
+type DateSpot = { name: string; description: string; cost?: string };
+type DateCourse = { theme: string; spots: DateSpot[]; point: string; totalCost?: string };
 type ReplyResult = { situation: string; replies: Reply[] };
 type TopicsResult = { situation: string; topics: Topic[] };
 type DateResult = { situation: string; courses: DateCourse[] };
@@ -69,6 +69,9 @@ export default function Home() {
   const [mode, setMode] = useState<InputMode>("image");
   const [featureMode, setFeatureMode] = useState<FeatureMode>("reply");
   const [area, setArea] = useState<string>("");
+  const [dateTime, setDateTime] = useState<string>("夕方");
+  const [dateInterests, setDateInterests] = useState<string>("");
+  const [dateBudget, setDateBudget] = useState<string>("〜5,000円");
   const [tone, setTone] = useState<Tone>("自然");
   const [preview, setPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<string>("image/jpeg");
@@ -208,15 +211,19 @@ export default function Home() {
   );
 
   const analyze = async () => {
-    if (mode === "image" && !preview) return;
-    if (mode === "text" && conversationText.trim().length < 5) return;
+    if (featureMode !== "date") {
+      if (mode === "image" && !preview) return;
+      if (mode === "text" && conversationText.trim().length < 5) return;
+    }
     setLoading(true);
     setError(null);
     try {
       const historyContext = getHistoryContext();
-      const body = mode === "image"
-        ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
-        : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area };
+      const body = featureMode === "date"
+        ? { profile: formatProfileForPrompt(savedProfile), mode: featureMode, area, dateTime, dateInterests, dateBudget }
+        : mode === "image"
+          ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
+          : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area };
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -449,8 +456,8 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Input mode toggle */}
-        <div className="flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
+        {/* Input mode toggle — hidden in date mode */}
+        <div className={`flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm ${featureMode === "date" ? "hidden" : ""}`}>
           {(["image", "text"] as const).map((m) => (
             <button
               key={m}
@@ -488,21 +495,77 @@ export default function Home() {
           </div>
         )}
 
-        {/* Area input — date mode only */}
+        {/* Date form — date mode only */}
         {featureMode === "date" && (
-          <div className="mb-4">
-            <input
-              type="text"
-              value={area}
-              onChange={(e) => setArea(e.target.value)}
-              placeholder="エリアを入力（例：梅田、渋谷、名古屋）"
-              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
-            />
+          <div className="space-y-3 mb-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">📍 エリア</label>
+              <input
+                type="text"
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                placeholder="例：梅田、渋谷、名古屋"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">🕐 時間帯</label>
+              <div className="flex gap-2">
+                {["昼", "夕方", "夜"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setDateTime(t)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                      dateTime === t
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">💝 相手の好きなもの・こと</label>
+              <input
+                type="text"
+                value={dateInterests}
+                onChange={(e) => setDateInterests(e.target.value)}
+                placeholder="例：カフェ巡り、映画、アウトドア"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">💰 予算（おひとり様）</label>
+              <div className="flex gap-2 flex-wrap">
+                {["〜3,000円", "〜5,000円", "〜10,000円", "それ以上"].map((b) => (
+                  <button
+                    key={b}
+                    onClick={() => setDateBudget(b)}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
+                      dateBudget === b
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+                    }`}
+                  >
+                    {b}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={analyze}
+              disabled={loading}
+              className="w-full py-4 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
+            >
+              {loading ? "提案中..." : result ? "再提案" : "デートコースを提案する"}
+            </button>
           </div>
         )}
 
         {/* Image mode */}
-        {mode === "image" && (
+        {featureMode !== "date" && mode === "image" && (
           <>
             <div
               className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm
@@ -556,7 +619,7 @@ export default function Home() {
         )}
 
         {/* Text mode */}
-        {mode === "text" && (
+        {featureMode !== "date" && mode === "text" && (
           <>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
               <p className="text-xs text-slate-400 mb-2">会話をそのままコピペしてください</p>
@@ -642,13 +705,22 @@ export default function Home() {
                   {course.spots.map((spot, j) => (
                     <div key={j} className="flex gap-3">
                       <span className="text-xs font-bold text-amber-500 mt-0.5 shrink-0">{j + 1}</span>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-700">{spot.name}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-semibold text-slate-700">{spot.name}</p>
+                          {spot.cost && <span className="text-xs text-slate-400">{spot.cost}</span>}
+                        </div>
                         <p className="text-xs text-slate-500 mt-0.5">{spot.description}</p>
                       </div>
                     </div>
                   ))}
                 </div>
+                {course.totalCost && (
+                  <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center">
+                    <span className="text-xs text-slate-500">合計目安</span>
+                    <span className="text-xs font-bold text-amber-600">{course.totalCost}</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
