@@ -6,8 +6,7 @@ import type { Profile, ProfileFormData, ProfileOutput } from "../types";
 // Lottie はクライアントのみ（SSR除外）
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
-// lottiefiles.com で好きな無料アニメーションのJSONURLに差し替え可能
-const LOTTIE_URL = "https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json";
+const LOTTIE_URL = "/heart.json";
 
 function LottieHero() {
   const [data, setData] = useState<unknown>(null);
