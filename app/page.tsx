@@ -272,7 +272,7 @@ export default function Home() {
     { key: "likes", label: "好きなこと", placeholder: "フットサル、旅行、料理など" },
     { key: "values", label: "価値観", placeholder: "誠実さを大事にする、自由を重視 など" },
     { key: "dialect", label: "方言・話し方", placeholder: "関西弁、標準語、テンポ早め など" },
-    { key: "sampleReplies", label: "自分の返信サンプル", placeholder: "実際に送ったメッセージをそのまま貼ってください\n例：「それ面白そうやん！どこ行ったん？」", multiline: true },
+    { key: "sampleReplies", label: "自分の返信サンプル（複数可）", placeholder: "実際に送ったメッセージを複数貼ってください。多いほど精度が上がります。\n---\nそれ面白そうやん！どこ行ったん？\n---\nわかるわーそれ笑　俺もよくあるわ\n---\nへえ、意外やな。もっと教えて", multiline: true },
     { key: "freeText", label: "自由記述", placeholder: "その他、AIに伝えたいことなんでも", multiline: true },
   ];
 
