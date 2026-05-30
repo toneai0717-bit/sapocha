@@ -33,7 +33,7 @@ type OnboardingStep = "welcome" | "form" | "result";
 
 type FormState = ProfileFormData & { name: string; firstPerson: string; dialect: string };
 
-function mapToProfile(form: FormState): Profile {
+function mapToProfile(form: FormState, profileText: string): Profile {
   return {
     name: form.name,
     firstPerson: form.firstPerson,
@@ -48,7 +48,7 @@ function mapToProfile(form: FormState): Profile {
     idealPartner: form.idealPartner,
     sampleReplies: "",
     freeText: "",
-    profileText: "",
+    profileText,
     app: form.app,
   };
 }
@@ -81,6 +81,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
     hobbies: "", personality: "", weekends: "", strengths: "", idealPartner: "", app: "Pairs",
   });
   const [profiles, setProfiles] = useState<ProfileOutput[]>([]);
+  const [savedProfileText, setSavedProfileText] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -354,7 +355,12 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           <>
             <div className="space-y-4 mb-5">
               {profiles.map((p, i) => (
-                <ProfileCardMini key={i} profile={p} />
+                <ProfileCardMini
+                  key={i}
+                  profile={p}
+                  onSave={(text) => setSavedProfileText(text)}
+                  isSaved={savedProfileText === p.text}
+                />
               ))}
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-5">
@@ -366,7 +372,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
 
         {!loading && (
           <button
-            onClick={() => onComplete(mapToProfile(form))}
+            onClick={() => onComplete(mapToProfile(form, savedProfileText))}
             className="w-full py-4 rounded-2xl font-bold text-sm text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-lg"
           >
             {profiles.length > 0 ? "保存してメイン画面へ →" : "メイン画面へ →"}
@@ -377,7 +383,15 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
   );
 }
 
-function ProfileCardMini({ profile }: { profile: ProfileOutput }) {
+function ProfileCardMini({
+  profile,
+  onSave,
+  isSaved,
+}: {
+  profile: ProfileOutput;
+  onSave?: (text: string) => void;
+  isSaved?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -405,12 +419,26 @@ function ProfileCardMini({ profile }: { profile: ProfileOutput }) {
         <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${BADGE_COLORS[profile.type] ?? "bg-slate-100 text-slate-600"}`}>
           {profile.type}
         </span>
-        <button
-          onClick={copy}
-          className="text-xs text-slate-400 hover:text-amber-600 font-medium px-3 py-1.5 rounded-lg hover:bg-white/60 transition-colors"
-        >
-          {copied ? "✓ コピー済み" : "コピー"}
-        </button>
+        <div className="flex items-center gap-2">
+          {onSave && (
+            <button
+              onClick={() => onSave(profile.text)}
+              className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
+                isSaved
+                  ? "bg-amber-500 text-white"
+                  : "text-amber-600 hover:bg-white/60 border border-amber-200"
+              }`}
+            >
+              {isSaved ? "✓ 保存済み" : "保存する"}
+            </button>
+          )}
+          <button
+            onClick={copy}
+            className="text-xs text-slate-400 hover:text-amber-600 font-medium px-2.5 py-1.5 rounded-lg hover:bg-white/60 transition-colors"
+          >
+            {copied ? "✓ コピー済み" : "コピー"}
+          </button>
+        </div>
       </div>
       <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{profile.text}</p>
       {profile.hooks.length > 0 && (
