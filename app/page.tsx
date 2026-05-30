@@ -2,9 +2,26 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 
+type InputMode = "image" | "text";
+type FeatureMode = "reply" | "topics" | "date";
 type Tone = "自然" | "盛り上げる" | "積極的";
 type Reply = { message: string; reason?: string };
-type Result = { situation: string; replies: Reply[] };
+type Topic = { title: string; starter: string; why: string };
+type DateSpot = { name: string; description: string };
+type DateCourse = { theme: string; spots: DateSpot[]; point: string };
+type ReplyResult = { situation: string; replies: Reply[] };
+type TopicsResult = { situation: string; topics: Topic[] };
+type DateResult = { situation: string; courses: DateCourse[] };
+type Result = ReplyResult | TopicsResult | DateResult;
+
+function isTopicsResult(r: Result): r is TopicsResult { return "topics" in r; }
+function isDateResult(r: Result): r is DateResult { return "courses" in r; }
+
+const FEATURE_MODES: { key: FeatureMode; label: string; icon: string }[] = [
+  { key: "reply",  label: "返信サポート", icon: "💬" },
+  { key: "topics", label: "話す内容",     icon: "💡" },
+  { key: "date",   label: "デートコース", icon: "🗓" },
+];
 type Profile = {
   firstPerson: string;
   likes: string;
@@ -49,7 +66,9 @@ function hasProfile(p: Profile): boolean {
 }
 
 export default function Home() {
-  const [mode, setMode] = useState<"image" | "text">("image");
+  const [mode, setMode] = useState<InputMode>("image");
+  const [featureMode, setFeatureMode] = useState<FeatureMode>("reply");
+  const [area, setArea] = useState<string>("");
   const [tone, setTone] = useState<Tone>("自然");
   const [preview, setPreview] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<string>("image/jpeg");
@@ -196,8 +215,8 @@ export default function Home() {
     try {
       const historyContext = getHistoryContext();
       const body = mode === "image"
-        ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext }
-        : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext };
+        ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
+        : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area };
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -413,7 +432,24 @@ export default function Home() {
           </div>
         )}
 
-        {/* Mode toggle */}
+        {/* Feature mode selector */}
+        <div className="flex gap-1.5 mb-3">
+          {FEATURE_MODES.map(({ key, label, icon }) => (
+            <button
+              key={key}
+              onClick={() => { setFeatureMode(key); setResult(null); setError(null); }}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                featureMode === key
+                  ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                  : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+              }`}
+            >
+              {icon} {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Input mode toggle */}
         <div className="flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
           {(["image", "text"] as const).map((m) => (
             <button
@@ -430,25 +466,40 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Tone selector */}
-        <div className="flex gap-2 mb-4">
-          {(["自然", "盛り上げる", "積極的"] as const).map((t) => {
-            const icons = { "自然": "💬", "盛り上げる": "🔥", "積極的": "💘" };
-            return (
-              <button
-                key={t}
-                onClick={() => { setTone(t); setResult(null); }}
-                className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                  tone === t
-                    ? "bg-slate-800 text-white border-slate-800"
-                    : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
-                }`}
-              >
-                {icons[t]} {t}
-              </button>
-            );
-          })}
-        </div>
+        {/* Tone selector — reply mode only */}
+        {featureMode === "reply" && (
+          <div className="flex gap-2 mb-4">
+            {(["自然", "盛り上げる", "積極的"] as const).map((t) => {
+              const icons = { "自然": "💬", "盛り上げる": "🔥", "積極的": "💘" };
+              return (
+                <button
+                  key={t}
+                  onClick={() => { setTone(t); setResult(null); }}
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                    tone === t
+                      ? "bg-slate-800 text-white border-slate-800"
+                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
+                  }`}
+                >
+                  {icons[t]} {t}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Area input — date mode only */}
+        {featureMode === "date" && (
+          <div className="mb-4">
+            <input
+              type="text"
+              value={area}
+              onChange={(e) => setArea(e.target.value)}
+              placeholder="エリアを入力（例：梅田、渋谷、名古屋）"
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
+            />
+          </div>
+        )}
 
         {/* Image mode */}
         {mode === "image" && (
@@ -550,7 +601,9 @@ export default function Home() {
             <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
               <p className="text-xs text-slate-500 leading-relaxed">{result.situation}</p>
             </div>
-            {result.replies.map((reply, i) => (
+
+            {/* Reply results */}
+            {!isTopicsResult(result) && !isDateResult(result) && result.replies.map((reply, i) => (
               <div key={i} className="rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
                 <div className="flex items-center justify-between mb-2.5">
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
@@ -564,6 +617,38 @@ export default function Home() {
                   </button>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{reply.message}</p>
+              </div>
+            ))}
+
+            {/* Topics results */}
+            {isTopicsResult(result) && result.topics.map((topic, i) => (
+              <div key={i} className="rounded-xl border border-amber-200 p-4 shadow-sm bg-amber-50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-amber-700">{topic.title}</span>
+                  <span className="text-xs text-amber-500 bg-amber-100 px-2 py-0.5 rounded-full">{topic.why}</span>
+                </div>
+                <p className="text-sm text-slate-700 leading-relaxed">{topic.starter}</p>
+              </div>
+            ))}
+
+            {/* Date course results */}
+            {isDateResult(result) && result.courses.map((course, i) => (
+              <div key={i} className="rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-bold text-slate-800">{course.theme}</span>
+                  <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">{course.point}</span>
+                </div>
+                <div className="space-y-2">
+                  {course.spots.map((spot, j) => (
+                    <div key={j} className="flex gap-3">
+                      <span className="text-xs font-bold text-amber-500 mt-0.5 shrink-0">{j + 1}</span>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-700">{spot.name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{spot.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>

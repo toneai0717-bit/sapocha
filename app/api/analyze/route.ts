@@ -6,6 +6,78 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 const MAX_BASE64_LENGTH = 5 * 1024 * 1024 * 1.4;
 
+const TOPICS_PROMPT = `あなたはマッチングアプリの会話コーチです。
+会話のスクリーンショットを分析し、実際に会ったときに話すと盛り上がる話題を提案してください。
+
+【画像の読み取り方】
+- 画面の右側が「自分」、左側が「相手」です。
+- 会話の流れ・相手の興味・キャラクターを読み取ること。
+
+【話題提案のルール】
+- 会話の中で出てきたキーワードや共通点を活かす。
+- 「相手が話したくなる」話題を選ぶ。
+- 一問一答で終わらない、広がりのある話題にする。
+- オンラインと対面では空気が変わるので、対面ならではの話題（食事・場所・体験など）を優先する。
+
+必ず以下のJSON形式のみで返してください：
+{
+  "situation": "会話の状況を1〜2文で",
+  "topics": [
+    { "title": "話題のタイトル", "starter": "会話の切り口・最初の一言", "why": "この話題が盛り上がる理由を10文字以内で" },
+    { "title": "話題のタイトル", "starter": "会話の切り口・最初の一言", "why": "この話題が盛り上がる理由を10文字以内で" },
+    { "title": "話題のタイトル", "starter": "会話の切り口・最初の一言", "why": "この話題が盛り上がる理由を10文字以内で" },
+    { "title": "話題のタイトル", "starter": "会話の切り口・最初の一言", "why": "この話題が盛り上がる理由を10文字以内で" },
+    { "title": "話題のタイトル", "starter": "会話の切り口・最初の一言", "why": "この話題が盛り上がる理由を10文字以内で" }
+  ]
+}`;
+
+const DATE_PROMPT = `あなたはマッチングアプリのデートプランナーです。
+会話のスクリーンショットから相手の興味・性格・関係性を読み取り、デートコースを3つ提案してください。
+
+【画像の読み取り方】
+- 画面の右側が「自分」、左側が「相手」です。
+- 相手の趣味・好み・雰囲気を読み取ること。
+
+【デートコースのルール】
+- 初デートを想定（重すぎず、軽すぎず）。
+- 会話の内容・相手の興味と連動させる。
+- 「また行きたい」と思わせる締め方を意識する。
+- エリアが指定されていればそのエリアで提案する。
+
+必ず以下のJSON形式のみで返してください：
+{
+  "situation": "会話から読み取った相手の印象を1〜2文で",
+  "courses": [
+    {
+      "theme": "コースのテーマ（10文字以内）",
+      "spots": [
+        { "name": "スポット名", "description": "なぜここか・何をするか" },
+        { "name": "スポット名", "description": "なぜここか・何をするか" },
+        { "name": "スポット名", "description": "なぜここか・何をするか" }
+      ],
+      "point": "このコースの決め手を15文字以内で"
+    },
+    {
+      "theme": "コースのテーマ（10文字以内）",
+      "spots": [
+        { "name": "スポット名", "description": "なぜここか・何をするか" },
+        { "name": "スポット名", "description": "なぜここか・何をするか" },
+        { "name": "スポット名", "description": "なぜここか・何をするか" }
+      ],
+      "point": "このコースの決め手を15文字以内で"
+    },
+    {
+      "theme": "コースのテーマ（10文字以内）",
+      "spots": [
+        { "name": "スポット名", "description": "なぜここか・何をするか" },
+        { "name": "スポット名", "description": "なぜここか・何をするか" },
+        { "name": "スポット名", "description": "なぜここか・何をするか" }
+      ],
+      "point": "このコースの決め手を15文字以内で"
+    }
+  ]
+}`;
+
 const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチです。
 スクリーンショットまたはテキストの会話を読み取り、「相手（自分ではない方）の直近の連続メッセージすべて」に対する返信案を3つ提案してください。相手が複数回に分けて送っている場合はその全体をまとめて1つの「ターン」として扱う。
 
@@ -69,7 +141,8 @@ const SYSTEM_PROMPT = `あなたはマッチングアプリの会話コーチで
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, mediaType, profile, text, tone, history } = await req.json();
+    const { image, mediaType, profile, text, tone, history, mode, area } = await req.json();
+    const safeMode = ["reply", "topics", "date"].includes(mode) ? mode : "reply";
 
     if (!image && !text) {
       return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
@@ -83,14 +156,39 @@ export async function POST(req: NextRequest) {
 
     const safeProfile = typeof profile === "string" ? profile.trim().slice(0, 500) : "";
     const safeTone = ["自然", "盛り上げる", "積極的"].includes(tone) ? tone : "自然";
-    const profileSection = safeProfile
-      ? `\n\n【送信者のプロフィール】\n${safeProfile}\n返信はこの人物の性格・話し方に合わせてください。`
-      : "";
-    const toneSection = `\n\n【指定トーン】「${safeTone}」で3つのバリエーションを返すこと。`;
+    const safeArea = typeof area === "string" ? area.trim().slice(0, 50) : "";
     const safeHistory = typeof history === "string" ? history.trim().slice(0, 3000) : "";
-    const historySection = safeHistory
-      ? `\n\n【これまでの会話の流れ（記憶）】\n${safeHistory}\n上記を踏まえ、すでに話したトピックの繰り返しを避け、会話を自然に発展させること。`
-      : "";
+
+    // モードごとにシステムプロンプトを切り替え
+    let systemPrompt: string;
+    let userInstruction: string;
+
+    if (safeMode === "topics") {
+      const profileSection = safeProfile
+        ? `\n\n【自分のプロフィール】\n${safeProfile}`
+        : "";
+      systemPrompt = TOPICS_PROMPT + profileSection;
+      userInstruction = "このスクリーンショットの会話を分析して、実際に会ったときに話すと盛り上がる話題を5つ提案してください。";
+    } else if (safeMode === "date") {
+      const profileSection = safeProfile
+        ? `\n\n【自分のプロフィール】\n${safeProfile}`
+        : "";
+      const areaSection = safeArea
+        ? `\n\n【エリア指定】${safeArea}周辺で提案してください。`
+        : "";
+      systemPrompt = DATE_PROMPT + profileSection + areaSection;
+      userInstruction = "このスクリーンショットの会話を分析して、デートコースを3つ提案してください。";
+    } else {
+      const profileSection = safeProfile
+        ? `\n\n【送信者のプロフィール】\n${safeProfile}\n返信はこの人物の性格・話し方に合わせてください。`
+        : "";
+      const toneSection = `\n\n【指定トーン】「${safeTone}」で3つのバリエーションを返すこと。`;
+      const historySection = safeHistory
+        ? `\n\n【これまでの会話の流れ（記憶）】\n${safeHistory}\n上記を踏まえ、すでに話したトピックの繰り返しを避け、会話を自然に発展させること。`
+        : "";
+      systemPrompt = SYSTEM_PROMPT + profileSection + toneSection + historySection;
+      userInstruction = "このスクリーンショットの会話を分析して、返信案を3つ提案してください。";
+    }
 
     const messageContent = image
       ? [
@@ -102,19 +200,19 @@ export async function POST(req: NextRequest) {
               data: image,
             },
           },
-          { type: "text" as const, text: "このスクリーンショットの会話を分析して、返信案を3つ提案してください。" },
+          { type: "text" as const, text: userInstruction },
         ]
       : [
           {
             type: "text" as const,
-            text: `以下のマッチングアプリの会話テキストを分析して、返信案を3つ提案してください。\n\n【会話】\n${(text as string).trim().slice(0, 2000)}`,
+            text: `${userInstruction}\n\n【会話】\n${(text as string).trim().slice(0, 2000)}`,
           },
         ];
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-5",
       max_tokens: 2048,
-      system: SYSTEM_PROMPT + profileSection + toneSection + historySection,
+      system: systemPrompt,
       messages: [{ role: "user", content: messageContent }],
     });
 
