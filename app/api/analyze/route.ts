@@ -109,7 +109,7 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコ
 
 export async function POST(req: NextRequest) {
   try {
-    const { images, profile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget } = await req.json();
+    const { images, profile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber } = await req.json();
     const safeMode = ["reply", "topics", "date"].includes(mode) ? mode : "reply";
 
     // imagesは配列 [{data: string, mediaType: string}]
@@ -136,11 +136,18 @@ export async function POST(req: NextRequest) {
     let userInstruction: string;
 
     if (safeMode === "topics") {
-      const profileSection = safeProfile
-        ? `\n\n【自分のプロフィール】\n${safeProfile}`
-        : "";
-      systemPrompt = TOPICS_PROMPT + profileSection;
-      userInstruction = "このスクリーンショットの会話を分析して、実際に会ったときに話すと盛り上がる話題を5つ提案してください。";
+      const safeDateNumber = typeof dateNumber === "string" ? dateNumber.slice(0, 10) : "1回目";
+      const profileSection = safeProfile ? `\n\n【自分のプロフィール】\n${safeProfile}` : "";
+      const historySection = safeHistory ? `\n\n【これまでの会話履歴】\n${safeHistory}` : "";
+      const dateNumberGuide = safeDateNumber === "1回目"
+        ? "初対面なので、趣味・仕事・出身・ライフスタイルなど自己開示と相手を知る話題を中心に提案してください。"
+        : safeDateNumber === "2回目"
+        ? "2回目なので、価値観・恋愛観・家族・将来観など、より深い相互開示につながる話題を提案してください。"
+        : "3回目以降なので、関係性をさらに深める話題・共通の将来像・次のステップへの布石になる話題を提案してください。";
+      systemPrompt = TOPICS_PROMPT + profileSection + historySection + `\n\n【デートの回数】${safeDateNumber}：${dateNumberGuide}`;
+      userInstruction = safeImages.length > 0
+        ? `このスクリーンショットを参考に、${safeDateNumber}のデートで盛り上がる話題を5つ提案してください。`
+        : `会話履歴をもとに、${safeDateNumber}のデートで盛り上がる話題を5つ提案してください。`;
     } else if (safeMode === "date") {
       const safeDateTime = typeof dateTime === "string" ? dateTime.slice(0, 10) : "夕方";
       const safeDateDuration = typeof dateDuration === "string" ? dateDuration.slice(0, 10) : "半日";

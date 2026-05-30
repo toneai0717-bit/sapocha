@@ -74,6 +74,7 @@ export default function Home() {
   const [dateInterests, setDateInterests] = useState<string>("");
   const [dateBudget, setDateBudget] = useState<string>("〜5,000円");
   const [tone, setTone] = useState<Tone>("自然");
+  const [dateNumber, setDateNumber] = useState<string>("1回目");
   const [previews, setPreviews] = useState<string[]>([]);
   const [mediaTypes, setMediaTypes] = useState<string[]>([]);
   const [conversationText, setConversationText] = useState<string>("");
@@ -210,7 +211,10 @@ export default function Home() {
   );
 
   const analyze = async () => {
-    if (featureMode !== "date") {
+    if (featureMode === "topics") {
+      const hasHistory = contacts.find((c) => c.id === selectedContactId)?.situationHistory.length ?? 0;
+      if (previews.length === 0 && hasHistory === 0 && conversationText.trim().length < 5) return;
+    } else if (featureMode !== "date") {
       if (mode === "image" && previews.length === 0) return;
       if (mode === "text" && conversationText.trim().length < 5) return;
     }
@@ -224,9 +228,11 @@ export default function Home() {
       }));
       const body = featureMode === "date"
         ? { profile: formatProfileForPrompt(savedProfile), mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
-        : mode === "image"
-          ? { images, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
-          : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area };
+        : featureMode === "topics"
+          ? { images, profile: formatProfileForPrompt(savedProfile), mode: featureMode, history: historyContext, dateNumber }
+          : mode === "image"
+            ? { images, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
+            : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area };
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -590,9 +596,35 @@ export default function Home() {
         {featureMode !== "date" && mode === "image" && (
           <>
             {featureMode === "topics" && (
-              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3">
-                💡 相手のプロフィールスクショを貼ると精度が上がります。会話スクショでもOK。
-              </p>
+              <div className="mb-3 space-y-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">📅 何回目のデート？</label>
+                  <div className="flex gap-2">
+                    {["1回目", "2回目", "3回目以降"].map((d) => (
+                      <button
+                        key={d}
+                        onClick={() => setDateNumber(d)}
+                        className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                          dateNumber === d
+                            ? "bg-amber-500 text-white border-amber-500"
+                            : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {selectedContactId && contacts.find((c) => c.id === selectedContactId)?.situationHistory.length ? (
+                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                    💡 会話履歴があるのでスクショなしでも提案できます。追加したい場合はスクショを貼ってください。
+                  </p>
+                ) : (
+                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                    💡 相手のプロフィールスクショを貼ると精度が上がります。会話スクショでもOK。
+                  </p>
+                )}
+              </div>
             )}
             {/* サムネイル一覧 */}
             {previews.length > 0 && (
@@ -640,6 +672,16 @@ export default function Home() {
                 {previews.length === 0 && <p className="text-slate-400 text-xs mt-1 hidden sm:block">複数枚・ドラッグ&ドロップ・Ctrl+V でも可</p>}
               </div>
             </div>
+            {/* topics: 履歴ありならスクショなしボタンを常に表示 */}
+            {featureMode === "topics" && selectedContactId && (contacts.find((c) => c.id === selectedContactId)?.situationHistory.length ?? 0) > 0 && previews.length === 0 && (
+              <button
+                onClick={analyze}
+                disabled={loading}
+                className="mt-3 w-full py-4 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
+              >
+                {loading ? "解析中..." : result ? "再生成" : "話題を提案する（履歴から生成）"}
+              </button>
+            )}
             {previews.length > 0 && (
               <div className="mt-3 flex gap-2">
                 <button
