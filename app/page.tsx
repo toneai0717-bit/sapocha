@@ -95,6 +95,7 @@ export default function Home() {
   const [newContactName, setNewContactName] = useState("");
   const [newContactProfile, setNewContactProfile] = useState("");
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -154,6 +155,7 @@ export default function Home() {
     );
     saveContacts(updated);
     setEditingContact(null);
+    setConfirmDelete(false);
   };
 
   const selectContact = (id: string) => {
@@ -336,7 +338,7 @@ export default function Home() {
               <div key={c.id} className="relative group flex items-center">
                 <button
                   onClick={() => selectContact(c.id)}
-                  className={`pl-3 pr-12 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                  className={`pl-3 pr-7 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                     selectedContactId === c.id
                       ? "bg-slate-800 text-white border-slate-800"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
@@ -352,19 +354,11 @@ export default function Home() {
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); setEditingContact({ ...c }); }}
-                  className={`absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
+                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
                     selectedContactId === c.id ? "text-slate-400 hover:text-white" : "text-slate-300 hover:text-slate-500"
                   }`}
                 >
                   ✎
-                </button>
-                <button
-                  onClick={() => deleteContact(c.id)}
-                  className={`absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
-                    selectedContactId === c.id ? "text-slate-400 hover:text-white" : "text-slate-300 hover:text-slate-500"
-                  }`}
-                >
-                  ×
                 </button>
               </div>
             ))}
@@ -512,20 +506,48 @@ export default function Home() {
                   <p className="text-xs text-slate-400">会話履歴：{editingContact.situationHistory.length}回分保存中</p>
                 )}
               </div>
-              <div className="flex gap-2 mt-5">
-                <button
-                  onClick={() => setEditingContact(null)}
-                  className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={saveEditContact}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-white transition-colors"
-                >
-                  保存
-                </button>
-              </div>
+              {confirmDelete ? (
+                <div className="mt-5 bg-red-50 border border-red-200 rounded-xl p-4">
+                  <p className="text-sm text-red-600 font-semibold mb-3">本当に削除しますか？会話履歴もすべて消えます。</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setConfirmDelete(false)}
+                      className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 border border-slate-200 transition-colors"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      onClick={() => { deleteContact(editingContact!.id); setEditingContact(null); setConfirmDelete(false); }}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-500 hover:bg-red-400 text-white transition-colors"
+                    >
+                      削除する
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-5 space-y-2">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setEditingContact(null); setConfirmDelete(false); }}
+                      className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      onClick={saveEditContact}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-white transition-colors"
+                    >
+                      保存
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="w-full py-2 rounded-xl text-xs text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    この相手を削除する
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
