@@ -72,14 +72,14 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           <h1 className="text-5xl font-black tracking-tight text-slate-900 mb-2">
             サポ<span className="text-amber-500">チャ</span>
           </h1>
-          <p className="text-slate-500 text-sm mb-10">マッチングアプリを、もっと自分らしく。</p>
+          <p className="text-slate-500 text-sm mb-10">返信からデートまで、全部サポート。</p>
 
           <div className="space-y-2.5 mb-10 text-left">
             {[
+              { icon: "✨", text: "マッチングアプリのプロフィール文を作れる" },
               { icon: "💬", text: "スクショを貼るだけで返信案を3つ提案" },
               { icon: "🎯", text: "あなたの話し方に合わせた返信文" },
               { icon: "💡", text: "デートの話題・コースもサポート" },
-              { icon: "✨", text: "マッチングアプリのプロフィール文も作れる" },
             ].map(({ icon, text }) => (
               <div key={text} className="flex items-center gap-3 bg-white/80 rounded-2xl px-4 py-3 shadow-sm border border-white">
                 <span className="text-xl shrink-0" aria-hidden="true">{icon}</span>

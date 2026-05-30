@@ -402,10 +402,7 @@ export default function Home() {
             </div>
           </div>
           <p className="mt-2 text-slate-700 text-sm font-medium leading-relaxed">
-            マッチングアプリの悩み、AIが一緒に考えます。
-          </p>
-          <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-            返信・話す内容・デートコースまで。あなたの恋愛をそっとサポート。
+            返信からデートまで、全部サポート。
           </p>
         </div>
 
