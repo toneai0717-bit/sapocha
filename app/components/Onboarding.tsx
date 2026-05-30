@@ -6,7 +6,7 @@ import type { Profile, ProfileFormData, ProfileOutput } from "../types";
 // Lottie はクライアントのみ（SSR除外）
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
-const LOTTIE_URL = "/heart.json";
+const LOTTIE_URL = "/sparkle.json";
 
 function LottieHero() {
   const [data, setData] = useState<unknown>(null);
