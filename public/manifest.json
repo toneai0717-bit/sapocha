@@ -3,7 +3,7 @@
   "short_name": "サポチャ",
   "description": "マッチングアプリの返信をAIがサポート",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#fffbeb",
   "theme_color": "#f59e0b",
   "orientation": "portrait-primary",

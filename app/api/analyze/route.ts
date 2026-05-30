@@ -1,10 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit } from "../../lib/rate-limit";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
-const MAX_BASE64_LENGTH = 5 * 1024 * 1024 * 1.4;
+const MAX_BASE64_LENGTH = 5 * 1024 * 1024 * 1.4; // ~5MB after base64 overhead
 
 const TOPICS_PROMPT = `あなたはデートコーチです。
 相手のプロフィールまたは会話のスクリーンショットを見て、初デートで盛り上がる話題を5つ提案してください。
@@ -108,21 +109,45 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコ
 }`;
 
 export async function POST(req: NextRequest) {
-  try {
-    const { images, profile, contactProfile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber } = await req.json();
-    const safeMode = ["reply", "topics", "date"].includes(mode) ? mode : "reply";
+  // Rate limiting
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: "リクエストが多すぎます。少し待ってから再試行してください。" }, { status: 429 });
+  }
 
-    // imagesは配列 [{data: string, mediaType: string}]
+  // Optional auth — set SAPOCHA_ACCESS_KEY in .env.local to enable
+  const accessKey = process.env.SAPOCHA_ACCESS_KEY;
+  if (accessKey) {
+    const auth = req.headers.get("Authorization");
+    if (auth !== `Bearer ${accessKey}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
+  try {
+    const body = await req.json() as Record<string, unknown>;
+    const { images, profile, contactProfile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber } = body;
+
+    const safeMode = ["reply", "topics", "date"].includes(mode as string) ? (mode as string) : "reply";
+
     const safeImages = Array.isArray(images)
       ? images
-          .filter((img) => typeof img?.data === "string" && img.data.length < MAX_BASE64_LENGTH)
-          .slice(0, 5) // 最大5枚
+          .filter(
+            (img) =>
+              typeof img?.data === "string" &&
+              img.data.length < MAX_BASE64_LENGTH &&
+              ALLOWED_MEDIA_TYPES.has(img.mediaType)
+          )
+          .slice(0, 5)
       : [];
 
     const safeProfile = typeof profile === "string" ? profile.trim().slice(0, 500) : "";
     const safeContactProfile = typeof contactProfile === "string" ? contactProfile.trim().slice(0, 500) : "";
     const contactProfileSection = safeContactProfile ? `\n\n【相手のプロフィール】\n${safeContactProfile}` : "";
-    const safeTone = ["自然", "盛り上げる", "積極的"].includes(tone) ? tone : "自然";
+    const safeTone = ["自然", "盛り上げる", "積極的"].includes(tone as string) ? (tone as string) : "自然";
     const safeArea = typeof area === "string" ? area.trim().slice(0, 50) : "";
     const safeHistory = typeof history === "string" ? history.trim().slice(0, 3000) : "";
 
@@ -135,7 +160,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "会話が短すぎます" }, { status: 400 });
     }
 
-    // モードごとにシステムプロンプトを切り替え
     let systemPrompt: string;
     let userInstruction: string;
 
@@ -143,15 +167,17 @@ export async function POST(req: NextRequest) {
       const safeDateNumber = typeof dateNumber === "string" ? dateNumber.slice(0, 10) : "1回目";
       const profileSection = safeProfile ? `\n\n【自分のプロフィール】\n${safeProfile}` : "";
       const historySection = safeHistory ? `\n\n【これまでの会話履歴】\n${safeHistory}` : "";
-      const dateNumberGuide = safeDateNumber === "1回目"
-        ? "初対面なので、趣味・仕事・出身・ライフスタイルなど自己開示と相手を知る話題を中心に提案してください。"
-        : safeDateNumber === "2回目"
-        ? "2回目なので、価値観・恋愛観・家族・将来観など、より深い相互開示につながる話題を提案してください。"
-        : "3回目以降なので、関係性をさらに深める話題・共通の将来像・次のステップへの布石になる話題を提案してください。";
+      const dateNumberGuide =
+        safeDateNumber === "1回目"
+          ? "初対面なので、趣味・仕事・出身・ライフスタイルなど自己開示と相手を知る話題を中心に提案してください。"
+          : safeDateNumber === "2回目"
+          ? "2回目なので、価値観・恋愛観・家族・将来観など、より深い相互開示につながる話題を提案してください。"
+          : "3回目以降なので、関係性をさらに深める話題・共通の将来像・次のステップへの布石になる話題を提案してください。";
       systemPrompt = TOPICS_PROMPT + profileSection + contactProfileSection + historySection + `\n\n【デートの回数】${safeDateNumber}：${dateNumberGuide}`;
-      userInstruction = safeImages.length > 0
-        ? `このスクリーンショットを参考に、${safeDateNumber}のデートで盛り上がる話題を5つ提案してください。`
-        : `会話履歴をもとに、${safeDateNumber}のデートで盛り上がる話題を5つ提案してください。`;
+      userInstruction =
+        safeImages.length > 0
+          ? `このスクリーンショットを参考に、${safeDateNumber}のデートで盛り上がる話題を5つ提案してください。`
+          : `会話履歴をもとに、${safeDateNumber}のデートで盛り上がる話題を5つ提案してください。`;
     } else if (safeMode === "date") {
       const safeDateTime = typeof dateTime === "string" ? dateTime.slice(0, 10) : "夕方";
       const safeDateDuration = typeof dateDuration === "string" ? dateDuration.slice(0, 10) : "半日";
@@ -164,8 +190,11 @@ export async function POST(req: NextRequest) {
         `デートの長さ：${safeDateDuration}`,
         safeDateInterests && `相手の好きなもの・こと：${safeDateInterests}`,
         safeDateBudget && `予算（おひとり様）：${safeDateBudget}`,
-      ].filter(Boolean).join("\n");
-      const spotCount = safeDateDuration === "ランチのみ" ? "1〜2箇所" : safeDateDuration === "一日" ? "4〜5箇所" : "2〜3箇所";
+      ]
+        .filter(Boolean)
+        .join("\n");
+      const spotCount =
+        safeDateDuration === "ランチのみ" ? "1〜2箇所" : safeDateDuration === "一日" ? "4〜5箇所" : "2〜3箇所";
       systemPrompt = DATE_PROMPT + profileSection + contactProfileSection + `\n\n【デート条件】\n${condSection}`;
       userInstruction = `上記の条件でデートコースを3つ提案してください。デートの長さに合わせてスポット数は${spotCount}にし、各スポットに目安費用とコース合計費用を含めてください。`;
     } else {
@@ -180,38 +209,48 @@ export async function POST(req: NextRequest) {
       userInstruction = "このスクリーンショットの会話を分析して、返信案を3つ提案してください。";
     }
 
-    const messageContent = safeMode === "date"
-      ? [{ type: "text" as const, text: userInstruction }]
-      : (safeMode === "topics" && safeImages.length === 0)
-      ? [{ type: "text" as const, text: userInstruction }]
-      : safeImages.length > 0
-      ? [
-          ...safeImages.map((img) => ({
-            type: "image" as const,
-            source: {
-              type: "base64" as const,
-              media_type: (ALLOWED_MEDIA_TYPES.has(img.mediaType) ? img.mediaType : "image/jpeg") as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-              data: img.data,
+    const messageContent =
+      safeMode === "date" || (safeMode === "topics" && safeImages.length === 0)
+        ? [{ type: "text" as const, text: userInstruction }]
+        : safeImages.length > 0
+        ? [
+            ...safeImages.map((img) => ({
+              type: "image" as const,
+              source: {
+                type: "base64" as const,
+                media_type: img.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+                data: img.data as string,
+              },
+            })),
+            {
+              type: "text" as const,
+              text:
+                safeImages.length > 1
+                  ? `${userInstruction}（${safeImages.length}枚のスクショを順番に読んでください）`
+                  : userInstruction,
             },
-          })),
-          { type: "text" as const, text: safeImages.length > 1 ? `${userInstruction}（${safeImages.length}枚のスクショを順番に読んでください）` : userInstruction },
-        ]
-      : [
-          {
-            type: "text" as const,
-            text: `${userInstruction}\n\n【会話】\n${(text as string).trim().slice(0, 2000)}`,
-          },
-        ];
+          ]
+        : [
+            {
+              type: "text" as const,
+              text: `${userInstruction}\n\n【会話】\n${(text as string).trim().slice(0, 2000)}`,
+            },
+          ];
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-5",
+      model: "claude-sonnet-4-6",
       max_tokens: 2048,
-      system: systemPrompt,
+      system: [
+        {
+          type: "text",
+          text: systemPrompt,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [{ role: "user", content: messageContent }],
     });
 
     const responseText = response.content[0].type === "text" ? response.content[0].text : "";
-
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
@@ -220,8 +259,7 @@ export async function POST(req: NextRequest) {
     try {
       const result = JSON.parse(jsonMatch[0]);
       return NextResponse.json(result);
-    } catch (parseError) {
-      console.error("JSON parse failed:", parseError instanceof Error ? parseError.message : "unknown");
+    } catch {
       return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
     }
   } catch (error) {

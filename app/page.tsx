@@ -1,70 +1,36 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-
-type InputMode = "image" | "text";
-type FeatureMode = "reply" | "topics" | "date";
-type Tone = "自然" | "盛り上げる" | "積極的";
-type Reply = { message: string; reason?: string };
-type Topic = { title: string; starter: string; why: string };
-type DateSpot = { name: string; description: string; cost?: string };
-type DateCourse = { theme: string; spots: DateSpot[]; point: string; totalCost?: string };
-type ReplyResult = { situation: string; replies: Reply[] };
-type TopicsResult = { situation: string; topics: Topic[] };
-type DateResult = { situation: string; courses: DateCourse[] };
-type Result = ReplyResult | TopicsResult | DateResult;
-
-function isTopicsResult(r: Result): r is TopicsResult { return "topics" in r; }
-function isDateResult(r: Result): r is DateResult { return "courses" in r; }
+import Link from "next/link";
+import Image from "next/image";
+import ProfileModal from "./components/ProfileModal";
+import AddContactModal from "./components/AddContactModal";
+import EditContactModal from "./components/EditContactModal";
+import ContactSelector from "./components/ContactSelector";
+import {
+  type InputMode,
+  type FeatureMode,
+  type Tone,
+  type Result,
+  type Profile,
+  type Contact,
+  EMPTY_PROFILE,
+  isTopicsResult,
+  isDateResult,
+  hasProfile,
+  formatProfileForPrompt,
+} from "./types";
 
 const FEATURE_MODES: { key: FeatureMode; label: string; icon: string }[] = [
   { key: "reply",  label: "返信サポート", icon: "💬" },
   { key: "topics", label: "デートの話題", icon: "💡" },
   { key: "date",   label: "デートコース", icon: "🗓" },
 ];
-type Profile = {
-  firstPerson: string;
-  likes: string;
-  values: string;
-  dialect: string;
-  sampleReplies: string;
-  freeText: string;
-};
-type Contact = {
-  id: string;
-  name: string;
-  profile: string;
-  situationHistory: string[];
-  createdAt: number;
-};
-
-const EMPTY_PROFILE: Profile = {
-  firstPerson: "",
-  likes: "",
-  values: "",
-  dialect: "",
-  sampleReplies: "",
-  freeText: "",
-};
 
 const PROFILE_KEY = "sapocha_profile_v2";
 const CONTACTS_KEY = "sapocha_contacts_v1";
 const SELECTED_CONTACT_KEY = "sapocha_selected_contact_v1";
-
-function formatProfileForPrompt(p: Profile): string {
-  const lines: string[] = [];
-  if (p.firstPerson) lines.push(`一人称：${p.firstPerson}`);
-  if (p.likes) lines.push(`好きなこと：${p.likes}`);
-  if (p.values) lines.push(`価値観：${p.values}`);
-  if (p.dialect) lines.push(`方言・話し方：${p.dialect}`);
-  if (p.sampleReplies) lines.push(`【返信スタイルのサンプル（このトーン・文体・テンションを完全に真似すること）】\n${p.sampleReplies}`);
-  if (p.freeText) lines.push(`その他：${p.freeText}`);
-  return lines.join("\n");
-}
-
-function hasProfile(p: Profile): boolean {
-  return Object.values(p).some((v) => v.trim() !== "");
-}
+const ACCESS_KEY_KEY = "sapocha_access_key";
 
 export default function Home() {
   const [mode, setMode] = useState<InputMode>("image");
@@ -88,14 +54,15 @@ export default function Home() {
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
   const [savedProfile, setSavedProfile] = useState<Profile>(EMPTY_PROFILE);
 
-  // Contact state
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [showAddContact, setShowAddContact] = useState(false);
-  const [newContactName, setNewContactName] = useState("");
-  const [newContactProfile, setNewContactProfile] = useState("");
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Auth
+  const [storedKey, setStoredKey] = useState<string>("");
+  const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [accessKeyInput, setAccessKeyInput] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -111,13 +78,14 @@ export default function Home() {
       if (storedContacts) setContacts(JSON.parse(storedContacts) as Contact[]);
       const storedSelected = localStorage.getItem(SELECTED_CONTACT_KEY);
       if (storedSelected) setSelectedContactId(storedSelected);
+      setStoredKey(localStorage.getItem(ACCESS_KEY_KEY) ?? "");
     } catch {
       // ignore corrupted storage
     }
   }, []);
 
   const saveProfile = () => {
-    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
     setSavedProfile(profile);
     setShowProfile(false);
   };
@@ -128,55 +96,55 @@ export default function Home() {
 
   const saveContacts = useCallback((updated: Contact[]) => {
     setContacts(updated);
-    localStorage.setItem(CONTACTS_KEY, JSON.stringify(updated));
+    try { localStorage.setItem(CONTACTS_KEY, JSON.stringify(updated)); } catch {}
   }, []);
 
-  const addContact = () => {
-    if (!newContactName.trim()) return;
+  const addContact = (name: string, contactProfile: string) => {
     const newContact: Contact = {
       id: Date.now().toString(),
-      name: newContactName.trim(),
-      profile: newContactProfile.trim(),
+      name,
+      profile: contactProfile,
       situationHistory: [],
       createdAt: Date.now(),
     };
-    const updated = [...contacts, newContact];
-    saveContacts(updated);
+    saveContacts([...contacts, newContact]);
     setSelectedContactId(newContact.id);
-    localStorage.setItem(SELECTED_CONTACT_KEY, newContact.id);
-    setNewContactName("");
+    try { localStorage.setItem(SELECTED_CONTACT_KEY, newContact.id); } catch {}
     setShowAddContact(false);
   };
 
-  const saveEditContact = () => {
-    if (!editingContact) return;
-    const updated = contacts.map((c) =>
-      c.id === editingContact.id ? { ...editingContact } : c
-    );
-    saveContacts(updated);
+  const saveEditContact = (updated: Contact) => {
+    saveContacts(contacts.map((c) => (c.id === updated.id ? updated : c)));
     setEditingContact(null);
-    setConfirmDelete(false);
   };
 
   const selectContact = (id: string) => {
     if (selectedContactId === id) {
       setSelectedContactId(null);
-      localStorage.removeItem(SELECTED_CONTACT_KEY);
+      try { localStorage.removeItem(SELECTED_CONTACT_KEY); } catch {}
     } else {
       setSelectedContactId(id);
-      localStorage.setItem(SELECTED_CONTACT_KEY, id);
+      try { localStorage.setItem(SELECTED_CONTACT_KEY, id); } catch {}
     }
   };
 
   const deleteContact = (id: string) => {
-    const updated = contacts.filter((c) => c.id !== id);
-    saveContacts(updated);
+    saveContacts(contacts.filter((c) => c.id !== id));
     if (selectedContactId === id) {
       setSelectedContactId(null);
-      localStorage.removeItem(SELECTED_CONTACT_KEY);
+      try { localStorage.removeItem(SELECTED_CONTACT_KEY); } catch {}
     }
+    setEditingContact(null);
   };
 
+  const submitAccessKey = () => {
+    if (!accessKeyInput.trim()) return;
+    const key = accessKeyInput.trim();
+    try { localStorage.setItem(ACCESS_KEY_KEY, key); } catch {}
+    setStoredKey(key);
+    setAccessKeyInput("");
+    setShowAuthPrompt(false);
+  };
 
   const getHistoryContext = useCallback((): string => {
     const contact = contacts.find((c) => c.id === selectedContactId);
@@ -242,33 +210,40 @@ export default function Home() {
         mediaType: mediaTypes[i] ?? "image/jpeg",
       }));
       const contactProfile = contacts.find((c) => c.id === selectedContactId)?.profile ?? "";
-      const body = featureMode === "date"
-        ? { profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
-        : featureMode === "topics"
+      const body =
+        featureMode === "date"
+          ? { profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
+          : featureMode === "topics"
           ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, history: historyContext, dateNumber }
           : mode === "image"
-            ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, tone, history: historyContext, mode: featureMode, area }
-            : { text: conversationText, profile: formatProfileForPrompt(savedProfile), contactProfile, tone, history: historyContext, mode: featureMode, area };
+          ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, tone, history: historyContext, mode: featureMode, area }
+          : { text: conversationText, profile: formatProfileForPrompt(savedProfile), contactProfile, tone, history: historyContext, mode: featureMode, area };
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (storedKey) headers["Authorization"] = `Bearer ${storedKey}`;
+
       const res = await fetch("/api/analyze", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
       });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setResult(data);
-      // 会話の流れを自動で相手の記憶に蓄積
+
+      if (res.status === 401) {
+        setShowAuthPrompt(true);
+        return;
+      }
+
+      const data = await res.json() as Record<string, unknown>;
+      if (data.error) throw new Error(data.error as string);
+      setResult(data as Result);
+
       if (data.situation && selectedContactId) {
-        setContacts((prev) => {
-          const updated = prev.map((c) =>
-            c.id === selectedContactId
-              ? { ...c, situationHistory: [...c.situationHistory.slice(-9), data.situation as string] }
-              : c
-          );
-          // localStorage更新はstate updaterの外で行う
-          setTimeout(() => localStorage.setItem(CONTACTS_KEY, JSON.stringify(updated)), 0);
-          return updated;
-        });
+        const updatedContacts = contacts.map((c) =>
+          c.id === selectedContactId
+            ? { ...c, situationHistory: [...c.situationHistory.slice(-9), data.situation as string] }
+            : c
+        );
+        saveContacts(updatedContacts);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
@@ -287,17 +262,6 @@ export default function Home() {
     }
   };
 
-  const selectedContact = contacts.find((c) => c.id === selectedContactId) ?? null;
-
-  const FIELDS: { key: keyof Profile; label: string; placeholder: string; multiline?: boolean }[] = [
-    { key: "firstPerson", label: "一人称", placeholder: "俺 / 僕 / 私" },
-    { key: "likes", label: "好きなこと", placeholder: "フットサル、旅行、料理など" },
-    { key: "values", label: "価値観", placeholder: "誠実さを大事にする、自由を重視 など" },
-    { key: "dialect", label: "方言・話し方", placeholder: "関西弁、標準語、テンポ早め など" },
-    { key: "sampleReplies", label: "自分の返信サンプル（複数可）", placeholder: "実際に送ったメッセージを複数貼ってください。多いほど精度が上がります。\n---\nそれ面白そうやん！どこ行ったん？\n---\nわかるわーそれ笑　俺もよくあるわ\n---\nへえ、意外やな。もっと教えて", multiline: true },
-    { key: "freeText", label: "自由記述", placeholder: "その他、AIに伝えたいことなんでも", multiline: true },
-  ];
-
   return (
     <div
       className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 text-stone-900 font-sans"
@@ -308,27 +272,19 @@ export default function Home() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-start justify-between">
-            <h1
-              className="text-4xl font-black tracking-tight text-slate-900 cursor-pointer select-none"
-              onClick={() => { window.location.href = "/"; }}
-            >
-              サポ<span className="text-amber-500">チャ</span>
+            <h1 className="text-4xl font-black tracking-tight text-slate-900">
+              <Link href="/" className="select-none hover:opacity-90 transition-opacity">
+                サポ<span className="text-amber-500">チャ</span>
+              </Link>
             </h1>
             <div className="flex items-center gap-2 mt-1.5">
-              <button
-                onClick={() => window.location.reload()}
-                className="text-xs text-slate-400 hover:text-slate-600 transition-colors bg-white hover:bg-slate-50 border border-slate-200 px-2.5 py-2 rounded-xl shadow-sm"
-                title="リロード"
-              >
-                ↺
-              </button>
               <button
                 onClick={() => { setProfile(savedProfile); setShowProfile(true); }}
                 className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
               >
-                <span>⚙</span>
+                <span aria-hidden="true">⚙</span>
                 <span>自分設定</span>
-                {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />}
+                {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -340,223 +296,60 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Contact selector */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 flex-wrap">
-            {contacts.map((c) => (
-              <div key={c.id} className="relative group flex items-center">
-                <button
-                  onClick={() => selectContact(c.id)}
-                  className={`pl-3 pr-7 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-                    selectedContactId === c.id
-                      ? "bg-slate-800 text-white border-slate-800"
-                      : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
-                  }`}
-                >
-                  {c.name}
-                  {c.situationHistory.length > 0 && (
-                    <span className={`ml-1 text-xs ${selectedContactId === c.id ? "text-amber-300" : "text-amber-400"}`}>●</span>
-                  )}
-                  {c.profile && (
-                    <span className={`ml-1 text-xs ${selectedContactId === c.id ? "text-blue-300" : "text-blue-400"}`}>i</span>
-                  )}
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setEditingContact({ ...c }); }}
-                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
-                    selectedContactId === c.id ? "text-slate-400 hover:text-white" : "text-slate-300 hover:text-slate-500"
-                  }`}
-                >
-                  ✎
-                </button>
-              </div>
-            ))}
-            <button
-              onClick={() => setShowAddContact(true)}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-amber-400 hover:text-amber-500 transition-colors bg-white"
-            >
-              ＋ 相手を追加
-            </button>
-          </div>
-          {selectedContact && (
-            <p className="text-xs text-slate-400 mt-1.5">
-              {selectedContact.name}との会話を記憶中
-              {selectedContact.situationHistory.length > 0 && (
-                <span className="ml-1 text-amber-500">（{selectedContact.situationHistory.length}回分）</span>
-              )}
-            </p>
-          )}
-        </div>
+        <ContactSelector
+          contacts={contacts}
+          selectedContactId={selectedContactId}
+          onSelect={selectContact}
+          onEdit={(c) => setEditingContact(c)}
+          onAdd={() => setShowAddContact(true)}
+        />
 
-        {/* Profile modal */}
+        {/* Modals */}
         {showProfile && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-              <h2 className="text-base font-semibold text-slate-900 mb-1">自分について</h2>
-              <p className="text-xs text-slate-500 mb-5">
-                入力した内容をもとに返信のキャラを合わせます。
-              </p>
-              <div className="space-y-4">
-                {FIELDS.map(({ key, label, placeholder, multiline }) => (
-                  <div key={key}>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                      {label}
-                    </label>
-                    {multiline ? (
-                      <textarea
-                        value={profile[key]}
-                        onChange={(e) => updateField(key, e.target.value)}
-                        placeholder={placeholder}
-                        rows={3}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        value={profile[key]}
-                        onChange={(e) => updateField(key, e.target.value)}
-                        placeholder={placeholder}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                      />
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-5">
-                <button
-                  onClick={() => setShowProfile(false)}
-                  className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={saveProfile}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-white transition-colors"
-                >
-                  保存
-                </button>
-              </div>
-            </div>
-          </div>
+          <ProfileModal
+            profile={profile}
+            onFieldChange={updateField}
+            onSave={saveProfile}
+            onClose={() => setShowProfile(false)}
+          />
         )}
-
-        {/* Add contact modal */}
         {showAddContact && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl">
-              <h2 className="text-base font-semibold text-slate-900 mb-1">相手を追加</h2>
-              <p className="text-xs text-slate-500 mb-4">
-                会話の流れを相手ごとに記憶します。
-              </p>
-              <div className="space-y-3">
-                <input
-                  type="text"
-                  value={newContactName}
-                  onChange={(e) => setNewContactName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addContact()}
-                  placeholder="名前（例：ひなちゃん）"
-                  autoFocus
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                />
-                <textarea
-                  value={newContactProfile}
-                  onChange={(e) => setNewContactProfile(e.target.value)}
-                  placeholder="相手のプロフィール（任意）&#10;例：25歳・看護師・神戸出身・猫好き・料理上手"
-                  rows={3}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                />
-              </div>
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => { setShowAddContact(false); setNewContactName(""); setNewContactProfile(""); }}
-                  className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={addContact}
-                  disabled={!newContactName.trim()}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 text-white transition-colors"
-                >
-                  追加
-                </button>
-              </div>
-            </div>
-          </div>
+          <AddContactModal
+            onAdd={addContact}
+            onClose={() => setShowAddContact(false)}
+          />
+        )}
+        {editingContact && (
+          <EditContactModal
+            contact={editingContact}
+            onSave={saveEditContact}
+            onDelete={deleteContact}
+            onClose={() => setEditingContact(null)}
+          />
         )}
 
-        {/* Edit contact modal */}
-        {editingContact && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
-            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl">
-              <h2 className="text-base font-semibold text-slate-900 mb-4">相手の設定</h2>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">名前</label>
-                  <input
-                    type="text"
-                    value={editingContact.name}
-                    onChange={(e) => setEditingContact({ ...editingContact, name: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">プロフィール情報</label>
-                  <textarea
-                    value={editingContact.profile}
-                    onChange={(e) => setEditingContact({ ...editingContact, profile: e.target.value })}
-                    placeholder="年齢・職業・出身・趣味・性格など&#10;例：25歳・看護師・神戸出身・猫好き・料理上手"
-                    rows={5}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">ここに入れた情報をAIが参考にして返信・話題を提案します。</p>
-                </div>
-                {editingContact.situationHistory.length > 0 && (
-                  <p className="text-xs text-slate-400">会話履歴：{editingContact.situationHistory.length}回分保存中</p>
-                )}
-              </div>
-              {confirmDelete ? (
-                <div className="mt-5 bg-red-50 border border-red-200 rounded-xl p-4">
-                  <p className="text-sm text-red-600 font-semibold mb-3">本当に削除しますか？会話履歴もすべて消えます。</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setConfirmDelete(false)}
-                      className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 border border-slate-200 transition-colors"
-                    >
-                      キャンセル
-                    </button>
-                    <button
-                      onClick={() => { deleteContact(editingContact!.id); setEditingContact(null); setConfirmDelete(false); }}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-red-500 hover:bg-red-400 text-white transition-colors"
-                    >
-                      削除する
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-5 space-y-2">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => { setEditingContact(null); setConfirmDelete(false); }}
-                      className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
-                    >
-                      キャンセル
-                    </button>
-                    <button
-                      onClick={saveEditContact}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-white transition-colors"
-                    >
-                      保存
-                    </button>
-                  </div>
-                  <button
-                    onClick={() => setConfirmDelete(true)}
-                    className="w-full py-2 rounded-xl text-xs text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    この相手を削除する
-                  </button>
-                </div>
-              )}
+        {/* Auth prompt */}
+        {showAuthPrompt && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-sm p-6 shadow-xl">
+              <h2 className="text-base font-semibold text-slate-900 mb-1">アクセスキーを入力</h2>
+              <p className="text-xs text-slate-500 mb-4">このアプリの利用には認証が必要です。</p>
+              <input
+                type="password"
+                value={accessKeyInput}
+                onChange={(e) => setAccessKeyInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitAccessKey()}
+                placeholder="アクセスキー"
+                autoFocus
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 mb-4"
+              />
+              <button
+                onClick={submitAccessKey}
+                disabled={!accessKeyInput.trim()}
+                className="w-full py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 text-white transition-colors"
+              >
+                認証する
+              </button>
             </div>
           </div>
         )}
@@ -573,21 +366,19 @@ export default function Home() {
                   : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
               }`}
             >
-              {icon} {label}
+              <span aria-hidden="true">{icon}</span> {label}
             </button>
           ))}
         </div>
 
-        {/* Input mode toggle — hidden in date mode */}
+        {/* Input mode toggle */}
         <div className={`flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm ${featureMode === "date" ? "hidden" : ""}`}>
           {(["image", "text"] as const).map((m) => (
             <button
               key={m}
               onClick={() => { setMode(m); setResult(null); setError(null); }}
               className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                mode === m
-                  ? "bg-amber-500 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                mode === m ? "bg-amber-500 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
               }`}
             >
               {m === "image" ? "📸 スクショ" : "✏️ テキスト"}
@@ -595,11 +386,11 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Tone selector — reply mode only */}
+        {/* Tone selector */}
         {featureMode === "reply" && (
           <div className="flex gap-2 mb-4">
             {(["自然", "盛り上げる", "積極的"] as const).map((t) => {
-              const icons = { "自然": "💬", "盛り上げる": "🔥", "積極的": "💘" };
+              const icons: Record<Tone, string> = { "自然": "💬", "盛り上げる": "🔥", "積極的": "💘" };
               return (
                 <button
                   key={t}
@@ -610,14 +401,14 @@ export default function Home() {
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
                   }`}
                 >
-                  {icons[t]} {t}
+                  <span aria-hidden="true">{icons[t]}</span> {t}
                 </button>
               );
             })}
           </div>
         )}
 
-        {/* Date form — date mode only */}
+        {/* Date form */}
         {featureMode === "date" && (
           <div className="space-y-3 mb-4">
             <div>
@@ -738,15 +529,22 @@ export default function Home() {
                 )}
               </div>
             )}
-            {/* サムネイル一覧 */}
             {previews.length > 0 && (
               <div className="flex gap-2 flex-wrap mb-2">
                 {previews.map((p, i) => (
                   <div key={i} className="relative">
-                    <img src={p} alt={`preview-${i}`} className="w-20 h-20 object-cover rounded-xl border border-slate-200" />
+                    <Image
+                      src={p}
+                      alt="スクリーンショット"
+                      width={80}
+                      height={80}
+                      className="w-20 h-20 object-cover rounded-xl border border-slate-200"
+                      unoptimized
+                    />
                     <button
                       onClick={() => removePreview(i)}
                       className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-slate-700 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-500 transition-colors"
+                      aria-label="画像を削除"
                     >
                       ×
                     </button>
@@ -756,10 +554,7 @@ export default function Home() {
             )}
             <div
               className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm
-                ${dragging
-                  ? "border-amber-400 bg-amber-50"
-                  : "border-slate-200 hover:border-amber-300 bg-white hover:bg-amber-50/30"
-                }
+                ${dragging ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-300 bg-white hover:bg-amber-50/30"}
                 ${previews.length > 0 ? "p-4" : "p-10"}`}
               onClick={() => inputRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
@@ -775,16 +570,15 @@ export default function Home() {
                 onChange={(e) => Array.from(e.target.files ?? []).forEach((f) => handleFile(f))}
               />
               <div className="text-center">
-                <div className={`rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-2 ${previews.length > 0 ? "w-10 h-10 text-xl" : "w-16 h-16 text-3xl"}`}>
+                <div className={`rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-2 ${previews.length > 0 ? "w-10 h-10 text-xl" : "w-16 h-16 text-3xl"}`} aria-hidden="true">
                   {featureMode === "topics" ? "👤" : "📸"}
                 </div>
                 <p className="text-slate-600 text-sm font-medium">
                   {previews.length > 0 ? "＋ 追加する" : featureMode === "topics" ? "プロフィール or 会話のスクショを選ぶ" : "タップしてスクショを選ぶ"}
                 </p>
-                {previews.length === 0 && <p className="text-slate-400 text-xs mt-1 hidden sm:block">複数枚・ドラッグ&ドロップ・Ctrl+V でも可</p>}
+                {previews.length === 0 && <p className="text-slate-400 text-xs mt-1 hidden sm:block">複数枚・ドラッグ&amp;ドロップ・Ctrl+V でも可</p>}
               </div>
             </div>
-            {/* topics: 履歴ありならスクショなしボタンを常に表示 */}
             {featureMode === "topics" && selectedContactId && (contacts.find((c) => c.id === selectedContactId)?.situationHistory.length ?? 0) > 0 && previews.length === 0 && (
               <button
                 onClick={analyze}
@@ -826,9 +620,11 @@ export default function Home() {
               <textarea
                 value={conversationText}
                 onChange={(e) => { setConversationText(e.target.value); setResult(null); }}
-                placeholder={featureMode === "topics"
-                  ? "例：25歳・看護師・神戸出身・猫が好き・休日はカフェ巡り\n\n---または会話---\n相手: 最近カフェ巡りにはまってます！\n自分: いいですね！どんなカフェが好きですか？"
-                  : "相手: こんにちは！\n自分: はじめまして！\n相手: 趣味は何ですか？"}
+                placeholder={
+                  featureMode === "topics"
+                    ? "例：25歳・看護師・神戸出身・猫が好き・休日はカフェ巡り\n\n---または会話---\n相手: 最近カフェ巡りにはまってます！\n自分: いいですね！どんなカフェが好きですか？"
+                    : "相手: こんにちは！\n自分: はじめまして！\n相手: 趣味は何ですか？"
+                }
                 rows={8}
                 className="w-full text-sm text-slate-800 placeholder-slate-300 resize-none focus:outline-none leading-relaxed"
               />
@@ -867,7 +663,6 @@ export default function Home() {
               <p className="text-xs text-slate-500 leading-relaxed">{result.situation ?? ""}</p>
             </div>
 
-            {/* Reply results */}
             {!isTopicsResult(result) && !isDateResult(result) && result.replies.map((reply, i) => (
               <div key={i} className="rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
                 <div className="flex items-center justify-between mb-2.5">
@@ -885,7 +680,6 @@ export default function Home() {
               </div>
             ))}
 
-            {/* Topics results */}
             {isTopicsResult(result) && result.topics.map((topic, i) => (
               <div key={i} className="rounded-xl border border-amber-200 p-4 shadow-sm bg-amber-50">
                 <div className="flex items-center justify-between mb-2">
@@ -896,7 +690,6 @@ export default function Home() {
               </div>
             ))}
 
-            {/* Date course results */}
             {isDateResult(result) && result.courses.map((course, i) => (
               <div key={i} className="rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
                 <div className="flex items-center justify-between mb-3">

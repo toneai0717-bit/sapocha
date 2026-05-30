@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description: "スクショを貼るだけ。返信案を3つ提案します。",
   manifest: "/manifest.json",
   appleWebApp: {
-    capable: true,
+    capable: false,
     statusBarStyle: "default",
     title: "サポチャ",
   },
@@ -26,9 +26,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: "#f59e0b",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
