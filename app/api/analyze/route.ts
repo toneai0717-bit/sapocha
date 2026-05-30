@@ -113,7 +113,7 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコ
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, mediaType, profile, text, tone, history, mode, area, dateTime, dateInterests, dateBudget } = await req.json();
+    const { image, mediaType, profile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget } = await req.json();
     const safeMode = ["reply", "topics", "date"].includes(mode) ? mode : "reply";
 
     if (!image && !text) {
@@ -143,17 +143,20 @@ export async function POST(req: NextRequest) {
       userInstruction = "このスクリーンショットの会話を分析して、実際に会ったときに話すと盛り上がる話題を5つ提案してください。";
     } else if (safeMode === "date") {
       const safeDateTime = typeof dateTime === "string" ? dateTime.slice(0, 10) : "夕方";
+      const safeDateDuration = typeof dateDuration === "string" ? dateDuration.slice(0, 10) : "半日";
       const safeDateInterests = typeof dateInterests === "string" ? dateInterests.slice(0, 200) : "";
       const safeDateBudget = typeof dateBudget === "string" ? dateBudget.slice(0, 20) : "";
       const profileSection = safeProfile ? `\n\n【自分のプロフィール】\n${safeProfile}` : "";
       const condSection = [
         safeArea && `エリア：${safeArea}`,
         `時間帯：${safeDateTime}`,
+        `デートの長さ：${safeDateDuration}`,
         safeDateInterests && `相手の好きなもの・こと：${safeDateInterests}`,
         safeDateBudget && `予算（おひとり様）：${safeDateBudget}`,
       ].filter(Boolean).join("\n");
+      const spotCount = safeDateDuration === "ランチのみ" ? "1〜2箇所" : safeDateDuration === "一日" ? "4〜5箇所" : "2〜3箇所";
       systemPrompt = DATE_PROMPT + profileSection + `\n\n【デート条件】\n${condSection}`;
-      userInstruction = "上記の条件でデートコースを3つ提案してください。各コースにスポットを3箇所と、目安の費用を含めてください。";
+      userInstruction = `上記の条件でデートコースを3つ提案してください。デートの長さに合わせてスポット数は${spotCount}にし、各スポットに目安費用とコース合計費用を含めてください。`;
     } else {
       const profileSection = safeProfile
         ? `\n\n【送信者のプロフィール】\n${safeProfile}\n返信はこの人物の性格・話し方に合わせてください。`

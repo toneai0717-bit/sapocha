@@ -70,6 +70,7 @@ export default function Home() {
   const [featureMode, setFeatureMode] = useState<FeatureMode>("reply");
   const [area, setArea] = useState<string>("");
   const [dateTime, setDateTime] = useState<string>("夕方");
+  const [dateDuration, setDateDuration] = useState<string>("半日");
   const [dateInterests, setDateInterests] = useState<string>("");
   const [dateBudget, setDateBudget] = useState<string>("〜5,000円");
   const [tone, setTone] = useState<Tone>("自然");
@@ -220,7 +221,7 @@ export default function Home() {
     try {
       const historyContext = getHistoryContext();
       const body = featureMode === "date"
-        ? { profile: formatProfileForPrompt(savedProfile), mode: featureMode, area, dateTime, dateInterests, dateBudget }
+        ? { profile: formatProfileForPrompt(savedProfile), mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
         : mode === "image"
           ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
           : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area };
@@ -522,6 +523,24 @@ export default function Home() {
                     }`}
                   >
                     {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">⏱ デートの長さ</label>
+              <div className="flex gap-2">
+                {["ランチのみ", "半日", "一日"].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDateDuration(d)}
+                    className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-colors ${
+                      dateDuration === d
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+                    }`}
+                  >
+                    {d}
                   </button>
                 ))}
               </div>
