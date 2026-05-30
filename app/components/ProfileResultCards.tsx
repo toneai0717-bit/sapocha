@@ -61,16 +61,26 @@ export default function ProfileResultCards({ profiles }: ProfileResultCardsProps
             </div>
           </div>
 
-          {/* 本文（編集可能） */}
+          {/* 本文（編集可能・高さ自動） */}
           <textarea
             value={editedTexts[i] ?? profile.text}
             onChange={(e) => {
               const updated = [...editedTexts];
               updated[i] = e.target.value;
               setEditedTexts(updated);
+              // auto-resize
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
             }}
-            rows={6}
-            className="w-full text-sm text-slate-700 leading-relaxed resize-none focus:outline-none bg-transparent focus:bg-white/50 rounded-lg px-1 -mx-1 transition-colors"
+            ref={(el) => {
+              // 初期高さを内容に合わせる
+              if (el) {
+                el.style.height = "auto";
+                el.style.height = `${el.scrollHeight}px`;
+              }
+            }}
+            rows={1}
+            className="w-full text-sm text-slate-700 leading-relaxed whitespace-pre-wrap resize-none focus:outline-none bg-transparent focus:bg-white/50 rounded-lg px-1 -mx-1 transition-colors overflow-hidden"
           />
 
           {/* 話しかけやすいポイント */}

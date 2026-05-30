@@ -372,7 +372,7 @@ function ProfileCardMini({ profile }: { profile: ProfileOutput }) {
           {copied ? "✓ コピー済み" : "コピー"}
         </button>
       </div>
-      <p className="text-sm text-slate-700 leading-relaxed">{profile.text}</p>
+      <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{profile.text}</p>
       {profile.hooks.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {profile.hooks.map((h, i) => (
