@@ -49,6 +49,7 @@ export default function Home() {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [editedReplies, setEditedReplies] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
@@ -65,6 +66,12 @@ export default function Home() {
   const [accessKeyInput, setAccessKeyInput] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (result && !isTopicsResult(result) && !isDateResult(result)) {
+      setEditedReplies(result.replies.map((r) => r.message));
+    }
+  }, [result]);
 
   useEffect(() => {
     try {
@@ -670,13 +677,22 @@ export default function Home() {
                     {reply.reason ?? `案 ${i + 1}`}
                   </span>
                   <button
-                    onClick={() => copy(reply.message, i)}
+                    onClick={() => copy(editedReplies[i] ?? reply.message, i)}
                     className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-amber-50 active:bg-amber-100"
                   >
                     {copiedIndex === i ? "✓ コピー済み" : "コピー"}
                   </button>
                 </div>
-                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{reply.message}</p>
+                <textarea
+                  value={editedReplies[i] ?? reply.message}
+                  onChange={(e) => {
+                    const updated = [...editedReplies];
+                    updated[i] = e.target.value;
+                    setEditedReplies(updated);
+                  }}
+                  rows={3}
+                  className="w-full text-sm text-slate-700 leading-relaxed resize-none focus:outline-none bg-transparent focus:bg-amber-50/30 rounded-lg px-1 -mx-1 transition-colors"
+                />
               </div>
             ))}
 
