@@ -109,14 +109,18 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコ
 
 export async function POST(req: NextRequest) {
   try {
-    const { image, mediaType, profile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget } = await req.json();
+    const { images, profile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget } = await req.json();
     const safeMode = ["reply", "topics", "date"].includes(mode) ? mode : "reply";
 
-    if (safeMode !== "date" && !image && !text) {
+    // imagesは配列 [{data: string, mediaType: string}]
+    const safeImages = Array.isArray(images)
+      ? images
+          .filter((img) => typeof img?.data === "string" && img.data.length < MAX_BASE64_LENGTH)
+          .slice(0, 5) // 最大5枚
+      : [];
+
+    if (safeMode !== "date" && safeImages.length === 0 && !text) {
       return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
-    }
-    if (image && image.length > MAX_BASE64_LENGTH) {
-      return NextResponse.json({ error: "画像が大きすぎます" }, { status: 413 });
     }
     if (text && typeof text === "string" && text.trim().length < 5) {
       return NextResponse.json({ error: "会話が短すぎます" }, { status: 400 });
@@ -167,17 +171,17 @@ export async function POST(req: NextRequest) {
 
     const messageContent = safeMode === "date"
       ? [{ type: "text" as const, text: userInstruction }]
-      : image
+      : safeImages.length > 0
       ? [
-          {
+          ...safeImages.map((img) => ({
             type: "image" as const,
             source: {
               type: "base64" as const,
-              media_type: (ALLOWED_MEDIA_TYPES.has(mediaType) ? mediaType : "image/jpeg") as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-              data: image,
+              media_type: (ALLOWED_MEDIA_TYPES.has(img.mediaType) ? img.mediaType : "image/jpeg") as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+              data: img.data,
             },
-          },
-          { type: "text" as const, text: userInstruction },
+          })),
+          { type: "text" as const, text: safeImages.length > 1 ? `${userInstruction}（${safeImages.length}枚のスクショを順番に読んでください）` : userInstruction },
         ]
       : [
           {

@@ -74,8 +74,8 @@ export default function Home() {
   const [dateInterests, setDateInterests] = useState<string>("");
   const [dateBudget, setDateBudget] = useState<string>("〜5,000円");
   const [tone, setTone] = useState<Tone>("自然");
-  const [preview, setPreview] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<string>("image/jpeg");
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [mediaTypes, setMediaTypes] = useState<string[]>([]);
   const [conversationText, setConversationText] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
@@ -171,50 +171,61 @@ export default function Home() {
   const handleFile = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-      setMediaType(file.type || "image/jpeg");
+      const dataUrl = e.target?.result as string;
+      setPreviews((prev) => [...prev, dataUrl]);
+      setMediaTypes((prev) => [...prev, file.type || "image/jpeg"]);
       setResult(null);
       setError(null);
     };
     reader.readAsDataURL(file);
   }, []);
 
+  const removePreview = useCallback((index: number) => {
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+    setMediaTypes((prev) => prev.filter((_, i) => i !== index));
+    setResult(null);
+  }, []);
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file?.type.startsWith("image/")) handleFile(file);
+      Array.from(e.dataTransfer.files)
+        .filter((f) => f.type.startsWith("image/"))
+        .forEach((f) => handleFile(f));
     },
     [handleFile]
   );
 
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
-      const item = Array.from(e.clipboardData.items).find((i) =>
-        i.type.startsWith("image/")
-      );
-      if (item) {
-        const file = item.getAsFile();
-        if (file) handleFile(file);
-      }
+      Array.from(e.clipboardData.items)
+        .filter((i) => i.type.startsWith("image/"))
+        .forEach((i) => {
+          const file = i.getAsFile();
+          if (file) handleFile(file);
+        });
     },
     [handleFile]
   );
 
   const analyze = async () => {
     if (featureMode !== "date") {
-      if (mode === "image" && !preview) return;
+      if (mode === "image" && previews.length === 0) return;
       if (mode === "text" && conversationText.trim().length < 5) return;
     }
     setLoading(true);
     setError(null);
     try {
       const historyContext = getHistoryContext();
+      const images = previews.map((p, i) => ({
+        data: p.split(",")[1],
+        mediaType: mediaTypes[i] ?? "image/jpeg",
+      }));
       const body = featureMode === "date"
         ? { profile: formatProfileForPrompt(savedProfile), mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
         : mode === "image"
-          ? { image: preview!.split(",")[1], mediaType, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
+          ? { images, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
           : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area };
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -437,7 +448,7 @@ export default function Home() {
           {FEATURE_MODES.map(({ key, label, icon }) => (
             <button
               key={key}
-              onClick={() => { setFeatureMode(key); setResult(null); setError(null); setPreview(null); }}
+              onClick={() => { setFeatureMode(key); setResult(null); setError(null); setPreviews([]); setMediaTypes([]); }}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                 featureMode === key
                   ? "bg-amber-500 text-white border-amber-500 shadow-sm"
@@ -583,13 +594,29 @@ export default function Home() {
                 💡 相手のプロフィールスクショを貼ると精度が上がります。会話スクショでもOK。
               </p>
             )}
+            {/* サムネイル一覧 */}
+            {previews.length > 0 && (
+              <div className="flex gap-2 flex-wrap mb-2">
+                {previews.map((p, i) => (
+                  <div key={i} className="relative">
+                    <img src={p} alt={`preview-${i}`} className="w-20 h-20 object-cover rounded-xl border border-slate-200" />
+                    <button
+                      onClick={() => removePreview(i)}
+                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-slate-700 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-500 transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div
               className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm
                 ${dragging
                   ? "border-amber-400 bg-amber-50"
                   : "border-slate-200 hover:border-amber-300 bg-white hover:bg-amber-50/30"
                 }
-                ${preview ? "p-3" : "p-10"}`}
+                ${previews.length > 0 ? "p-4" : "p-10"}`}
               onClick={() => inputRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
@@ -599,27 +626,24 @@ export default function Home() {
                 ref={inputRef}
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                onChange={(e) => Array.from(e.target.files ?? []).forEach((f) => handleFile(f))}
               />
-              {preview ? (
-                <img src={preview} alt="preview" className="w-full rounded-xl object-contain max-h-80" />
-              ) : (
-                <div className="text-center">
-                  <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-3xl mx-auto mb-3">
-                    {featureMode === "topics" ? "👤" : "📸"}
-                  </div>
-                  <p className="text-slate-600 text-sm font-medium">
-                    {featureMode === "topics" ? "プロフィール or 会話のスクショを選ぶ" : "タップしてスクショを選ぶ"}
-                  </p>
-                  <p className="text-slate-400 text-xs mt-1 hidden sm:block">ドラッグ&ドロップ・Ctrl+V でも可</p>
+              <div className="text-center">
+                <div className={`rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-2 ${previews.length > 0 ? "w-10 h-10 text-xl" : "w-16 h-16 text-3xl"}`}>
+                  {featureMode === "topics" ? "👤" : "📸"}
                 </div>
-              )}
+                <p className="text-slate-600 text-sm font-medium">
+                  {previews.length > 0 ? "＋ 追加する" : featureMode === "topics" ? "プロフィール or 会話のスクショを選ぶ" : "タップしてスクショを選ぶ"}
+                </p>
+                {previews.length === 0 && <p className="text-slate-400 text-xs mt-1 hidden sm:block">複数枚・ドラッグ&ドロップ・Ctrl+V でも可</p>}
+              </div>
             </div>
-            {preview && (
+            {previews.length > 0 && (
               <div className="mt-3 flex gap-2">
                 <button
-                  onClick={() => { setPreview(null); setResult(null); setError(null); }}
+                  onClick={() => { setPreviews([]); setMediaTypes([]); setResult(null); setError(null); }}
                   className="px-4 py-4 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white transition-colors shadow-sm"
                 >
                   クリア
