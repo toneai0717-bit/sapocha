@@ -27,13 +27,13 @@ export default function ProfileResultCards({ profiles }: ProfileResultCardsProps
   const TYPE_COLORS: Record<string, string> = {
     "誠実系": "bg-blue-50 border-blue-200",
     "親しみやすい系": "bg-amber-50 border-amber-200",
-    "個性系": "bg-violet-50 border-violet-200",
+    "フレンドリー系": "bg-green-50 border-green-200",
   };
 
   const BADGE_COLORS: Record<string, string> = {
     "誠実系": "bg-blue-100 text-blue-700",
     "親しみやすい系": "bg-amber-100 text-amber-700",
-    "個性系": "bg-violet-100 text-violet-700",
+    "フレンドリー系": "bg-green-100 text-green-700",
   };
 
   return (
