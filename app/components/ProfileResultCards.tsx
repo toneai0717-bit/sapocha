@@ -1,0 +1,93 @@
+"use client";
+import { useState, useEffect } from "react";
+import type { ProfileOutput } from "../types";
+
+interface ProfileResultCardsProps {
+  profiles: ProfileOutput[];
+}
+
+export default function ProfileResultCards({ profiles }: ProfileResultCardsProps) {
+  const [editedTexts, setEditedTexts] = useState<string[]>([]);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    setEditedTexts(profiles.map((p) => p.text));
+  }, [profiles]);
+
+  const copy = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 1500);
+    } catch {
+      // ignore
+    }
+  };
+
+  const TYPE_COLORS: Record<string, string> = {
+    "誠実系": "bg-blue-50 border-blue-200",
+    "親しみやすい系": "bg-amber-50 border-amber-200",
+    "個性系": "bg-violet-50 border-violet-200",
+  };
+
+  const BADGE_COLORS: Record<string, string> = {
+    "誠実系": "bg-blue-100 text-blue-700",
+    "親しみやすい系": "bg-amber-100 text-amber-700",
+    "個性系": "bg-violet-100 text-violet-700",
+  };
+
+  return (
+    <div className="mt-5 space-y-4">
+      {profiles.map((profile, i) => (
+        <div
+          key={i}
+          className={`rounded-xl border p-4 shadow-sm ${TYPE_COLORS[profile.type] ?? "bg-white border-slate-200"}`}
+        >
+          {/* ヘッダー */}
+          <div className="flex items-center justify-between mb-3">
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${BADGE_COLORS[profile.type] ?? "bg-slate-100 text-slate-600"}`}>
+              {profile.type}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">
+                {(editedTexts[i] ?? profile.text).length}文字
+              </span>
+              <button
+                onClick={() => copy(editedTexts[i] ?? profile.text, i)}
+                className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-white/60 active:bg-white"
+              >
+                {copiedIndex === i ? "✓ コピー済み" : "コピー"}
+              </button>
+            </div>
+          </div>
+
+          {/* 本文（編集可能） */}
+          <textarea
+            value={editedTexts[i] ?? profile.text}
+            onChange={(e) => {
+              const updated = [...editedTexts];
+              updated[i] = e.target.value;
+              setEditedTexts(updated);
+            }}
+            rows={6}
+            className="w-full text-sm text-slate-700 leading-relaxed resize-none focus:outline-none bg-transparent focus:bg-white/50 rounded-lg px-1 -mx-1 transition-colors"
+          />
+
+          {/* 話しかけやすいポイント */}
+          {profile.hooks.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/60">
+              <p className="text-xs font-semibold text-slate-500 mb-1.5">💬 話しかけやすいポイント</p>
+              <div className="flex flex-wrap gap-1.5">
+                {profile.hooks.map((hook, j) => (
+                  <span key={j} className="text-xs bg-white/70 text-slate-600 px-2 py-1 rounded-lg border border-white/80">
+                    {hook}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}

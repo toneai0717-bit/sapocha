@@ -8,6 +8,8 @@ import AddContactModal from "./components/AddContactModal";
 import EditContactModal from "./components/EditContactModal";
 import ContactSelector from "./components/ContactSelector";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
+import ProfileForm from "./components/ProfileForm";
+import ProfileResultCards from "./components/ProfileResultCards";
 import {
   type InputMode,
   type FeatureMode,
@@ -16,13 +18,15 @@ import {
   type Profile,
   type Contact,
   EMPTY_PROFILE,
+  type ProfileFormData,
   isTopicsResult,
   isDateResult,
+  isProfileResult,
   hasProfile,
   formatProfileForPrompt,
 } from "./types";
 
-const FEATURE_MODES: { key: FeatureMode; label: string; icon: string }[] = [
+const MAIN_MODES: { key: FeatureMode; label: string; icon: string }[] = [
   { key: "reply",  label: "返信サポート", icon: "💬" },
   { key: "topics", label: "デートの話題", icon: "💡" },
   { key: "date",   label: "デートコース", icon: "🗓" },
@@ -71,7 +75,7 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (result && !isTopicsResult(result) && !isDateResult(result)) {
+    if (result && !isTopicsResult(result) && !isDateResult(result) && !isProfileResult(result)) {
       setEditedReplies(result.replies.map((r) => r.message));
     }
     if (!result) setChatMessages([]);
@@ -264,7 +268,33 @@ export default function Home() {
     }
   };
 
+  const generateProfile = async (data: ProfileFormData) => {
+    setLoading(true);
+    setError(null);
+    setChatMessages([]);
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (storedKey) headers["Authorization"] = `Bearer ${storedKey}`;
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(data),
+      });
+      if (res.status === 401) { setShowAuthPrompt(true); return; }
+      const json = await res.json() as Record<string, unknown>;
+      if (json.error) throw new Error(json.error as string);
+      setResult(json as Result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "エラーが発生しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const buildResultContext = (r: Result): string => {
+    if (isProfileResult(r)) {
+      return r.profiles.map((p) => `【${p.type}】\n${p.text}`).join("\n\n");
+    }
     const lines = [`【状況】\n${r.situation ?? ""}`];
     if (isTopicsResult(r)) {
       lines.push("\n【提案した話題】");
@@ -274,8 +304,8 @@ export default function Home() {
       r.courses.forEach((c, i) => lines.push(`${i + 1}. ${c.theme}：${c.spots.map((s) => s.name).join(" → ")}`));
     } else {
       lines.push("\n【提案した返信案】");
-      const msgs = editedReplies.length > 0 ? editedReplies : r.replies.map((rep) => rep.message);
-      msgs.forEach((msg, i) => lines.push(`案${i + 1}：${msg}`));
+      const msgs = editedReplies.length > 0 ? editedReplies : r.replies.map((rep: { message: string }) => rep.message);
+      msgs.forEach((msg: string, i: number) => lines.push(`案${i + 1}：${msg}`));
     }
     return lines.join("\n");
   };
@@ -408,24 +438,45 @@ export default function Home() {
         )}
 
         {/* Feature mode selector */}
-        <div className="flex gap-1.5 mb-3">
-          {FEATURE_MODES.map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => { setFeatureMode(key); setResult(null); setError(null); setPreviews([]); setMediaTypes([]); }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
-                featureMode === key
-                  ? "bg-amber-500 text-white border-amber-500 shadow-sm"
-                  : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
-              }`}
-            >
-              <span aria-hidden="true">{icon}</span> {label}
-            </button>
-          ))}
+        <div className="space-y-1.5 mb-3">
+          <div className="flex gap-1.5">
+            {MAIN_MODES.map(({ key, label, icon }) => (
+              <button
+                key={key}
+                onClick={() => { setFeatureMode(key); setResult(null); setError(null); setPreviews([]); setMediaTypes([]); }}
+                className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                  featureMode === key
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                    : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+                }`}
+              >
+                <span aria-hidden="true">{icon}</span> {label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => { setFeatureMode("profile"); setResult(null); setError(null); setPreviews([]); setMediaTypes([]); }}
+            className={`w-full py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+              featureMode === "profile"
+                ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+            }`}
+          >
+            <span aria-hidden="true">✨</span> プロフィール文を作る
+          </button>
         </div>
 
+        {/* Profile mode */}
+        {featureMode === "profile" && (
+          <ProfileForm
+            onSubmit={generateProfile}
+            loading={loading}
+            hasResult={!!result}
+          />
+        )}
+
         {/* Input mode toggle */}
-        <div className={`flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm ${featureMode === "date" ? "hidden" : ""}`}>
+        <div className={`flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm ${featureMode === "date" || featureMode === "profile" ? "hidden" : ""}`}>
           {(["image", "text"] as const).map((m) => (
             <button
               key={m}
@@ -710,7 +761,11 @@ export default function Home() {
         )}
 
         {/* Results */}
-        {result && (
+        {result && isProfileResult(result) && (
+          <ProfileResultCards profiles={result.profiles} />
+        )}
+
+        {result && !isProfileResult(result) && (
           <div className="mt-5 space-y-3">
             <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
               <p className="text-xs text-slate-500 leading-relaxed">{result.situation ?? ""}</p>
@@ -783,7 +838,7 @@ export default function Home() {
           </div>
         )}
 
-        {result && (
+        {result && !isProfileResult(result) && (
           <ChatPanel
             messages={chatMessages}
             loading={chatLoading}

@@ -1,5 +1,5 @@
 export type InputMode = "image" | "text";
-export type FeatureMode = "reply" | "topics" | "date";
+export type FeatureMode = "reply" | "topics" | "date" | "profile";
 export type Tone = "自然" | "盛り上げる" | "積極的";
 
 export type Reply = { message: string; reason?: string };
@@ -9,7 +9,29 @@ export type DateCourse = { theme: string; spots: DateSpot[]; point: string; tota
 export type ReplyResult = { situation: string; replies: Reply[] };
 export type TopicsResult = { situation: string; topics: Topic[] };
 export type DateResult = { situation: string; courses: DateCourse[] };
-export type Result = ReplyResult | TopicsResult | DateResult;
+export type ProfileFormData = {
+  age: string;
+  job: string;
+  area: string;
+  hobbies: string;
+  personality: string;
+  weekends: string;
+  strengths: string;
+  idealPartner: string;
+  app: string;
+};
+
+export type ProfileOutput = {
+  type: string;
+  text: string;
+  hooks: string[];
+};
+
+export type ProfileResult = {
+  profiles: ProfileOutput[];
+};
+
+export type Result = ReplyResult | TopicsResult | DateResult | ProfileResult;
 
 export type Profile = {
   firstPerson: string;
@@ -43,6 +65,10 @@ export function isTopicsResult(r: Result): r is TopicsResult {
 
 export function isDateResult(r: Result): r is DateResult {
   return "courses" in r;
+}
+
+export function isProfileResult(r: Result): r is ProfileResult {
+  return "profiles" in r;
 }
 
 export function hasProfile(p: Profile): boolean {
