@@ -119,17 +119,19 @@ export async function POST(req: NextRequest) {
           .slice(0, 5) // 最大5枚
       : [];
 
-    if (safeMode !== "date" && safeImages.length === 0 && !text) {
+    const safeProfile = typeof profile === "string" ? profile.trim().slice(0, 500) : "";
+    const safeTone = ["自然", "盛り上げる", "積極的"].includes(tone) ? tone : "自然";
+    const safeArea = typeof area === "string" ? area.trim().slice(0, 50) : "";
+    const safeHistory = typeof history === "string" ? history.trim().slice(0, 3000) : "";
+
+    const noInput = safeImages.length === 0 && !text;
+    const inputRequired = safeMode !== "date" && !(safeMode === "topics" && safeHistory);
+    if (noInput && inputRequired) {
       return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
     }
     if (text && typeof text === "string" && text.trim().length < 5) {
       return NextResponse.json({ error: "会話が短すぎます" }, { status: 400 });
     }
-
-    const safeProfile = typeof profile === "string" ? profile.trim().slice(0, 500) : "";
-    const safeTone = ["自然", "盛り上げる", "積極的"].includes(tone) ? tone : "自然";
-    const safeArea = typeof area === "string" ? area.trim().slice(0, 50) : "";
-    const safeHistory = typeof history === "string" ? history.trim().slice(0, 3000) : "";
 
     // モードごとにシステムプロンプトを切り替え
     let systemPrompt: string;
@@ -177,6 +179,8 @@ export async function POST(req: NextRequest) {
     }
 
     const messageContent = safeMode === "date"
+      ? [{ type: "text" as const, text: userInstruction }]
+      : (safeMode === "topics" && safeImages.length === 0)
       ? [{ type: "text" as const, text: userInstruction }]
       : safeImages.length > 0
       ? [

@@ -292,7 +292,10 @@ export default function Home() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-start justify-between">
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">
+            <h1
+              className="text-4xl font-black tracking-tight text-slate-900 cursor-pointer select-none"
+              onClick={() => { setPreviews([]); setMediaTypes([]); setResult(null); setError(null); setConversationText(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+            >
               サポ<span className="text-amber-500">チャ</span>
             </h1>
             <button
