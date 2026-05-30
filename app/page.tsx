@@ -403,7 +403,7 @@ export default function Home() {
                 className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
               >
                 <span aria-hidden="true">⚙</span>
-                <span>自分設定</span>
+                <span>プロフィール設定</span>
                 {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" aria-hidden="true" />}
               </button>
             </div>
@@ -428,6 +428,11 @@ export default function Home() {
             onFieldChange={updateField}
             onSave={saveProfile}
             onClose={() => setShowProfile(false)}
+            onGenerateProfile={() => {
+              saveProfile();
+              setFeatureMode("profile");
+              setResult(null);
+            }}
           />
         )}
         {showAddContact && (
