@@ -160,14 +160,6 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
               <p className="text-xs text-slate-400 mt-1">返信があなたらしくなります。後からいつでも編集できます。</p>
             </div>
             <div className="flex items-center gap-2 mt-1 shrink-0">
-              {process.env.NODE_ENV === "development" && (
-                <button
-                  onClick={() => setForm(DEV_TEST_DATA)}
-                  className="text-xs bg-slate-800 text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-700 transition-colors"
-                >
-                  🧪 テスト入力
-                </button>
-              )}
               <button onClick={onSkip} className="text-xs text-slate-400 hover:text-slate-600">
                 スキップ
               </button>
@@ -295,6 +287,13 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
               className="w-full py-4 rounded-2xl font-bold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-lg"
             >
               プロフィール文を生成する →
+            </button>
+
+            <button
+              onClick={() => setForm(DEV_TEST_DATA)}
+              className="w-full py-2 text-xs text-slate-300 hover:text-slate-400 transition-colors"
+            >
+              🧪 テストデータを入力
             </button>
           </div>
         </div>
