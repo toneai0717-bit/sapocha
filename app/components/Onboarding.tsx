@@ -157,7 +157,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
     const canNext = form.hobbies.trim() || form.age.trim() || form.job.trim();
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50">
-        <div className="max-w-lg mx-auto px-4 pt-8 pb-16">
+        <div className="max-w-lg mx-auto px-4 pt-8 pb-[calc(4rem+env(safe-area-inset-bottom))]">
           <div className="flex items-start justify-between mb-6">
             <div>
               <p className="text-xs font-semibold text-amber-500 mb-1">STEP 1 / 2</p>
@@ -321,7 +321,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
   // ── STEP: RESULT ───────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50">
-      <div className="max-w-lg mx-auto px-4 pt-8 pb-16">
+      <div className="max-w-lg mx-auto px-4 pt-8 pb-[calc(4rem+env(safe-area-inset-bottom))]">
         <div className="mb-6">
           <p className="text-xs font-semibold text-amber-500 mb-1">STEP 2 / 2</p>
           <h2 className="text-xl font-black text-slate-900">

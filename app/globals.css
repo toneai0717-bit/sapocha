@@ -4,6 +4,13 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* iOS Safariのフォームズーム防止（font-size < 16px でズームが発生する） */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
 /* iPhoneのノッチ・ホームバー対応（viewport-fit=coverと組み合わせて動作） */
 @supports (padding: env(safe-area-inset-bottom)) {
   body {

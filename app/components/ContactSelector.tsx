@@ -25,7 +25,7 @@ export default function ContactSelector({
           <div key={c.id} className="relative group flex items-center">
             <button
               onClick={() => onSelect(c.id)}
-              className={`pl-3 pr-7 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              className={`pl-3 pr-9 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                 selectedContactId === c.id
                   ? "bg-slate-800 text-white border-slate-800"
                   : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
@@ -45,7 +45,7 @@ export default function ContactSelector({
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(c); }}
-              className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
+              className={`absolute right-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-xs transition-colors ${
                 selectedContactId === c.id ? "text-slate-400 hover:text-white" : "text-slate-300 hover:text-slate-500"
               }`}
               aria-label={`${c.name}を編集`}

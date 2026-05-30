@@ -17,7 +17,7 @@ export default function AddContactModal({ onAdd, onClose }: AddContactModalProps
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
-      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg px-6 pt-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <h2 className="text-base font-semibold text-slate-900 mb-1">相手を追加</h2>
         <p className="text-xs text-slate-500 mb-4">会話の流れを相手ごとに記憶します。</p>
         <div className="space-y-3">
@@ -25,7 +25,7 @@ export default function AddContactModal({ onAdd, onClose }: AddContactModalProps
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && handleAdd()}
             placeholder="名前（例：ひなちゃん）"
             autoFocus
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"

@@ -635,7 +635,7 @@ export default function Home() {
                     />
                     <button
                       onClick={() => removePreview(i)}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-slate-700 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-500 transition-colors"
+                      className="absolute -top-2 -right-2 w-7 h-7 bg-slate-700 text-white rounded-full text-sm flex items-center justify-center hover:bg-red-500 transition-colors"
                       aria-label="画像を削除"
                     >
                       ×
