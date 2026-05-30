@@ -3,16 +3,22 @@ import type { Profile } from "../types";
 
 const FIELDS: { key: keyof Profile; label: string; placeholder: string; multiline?: boolean }[] = [
   { key: "firstPerson", label: "一人称", placeholder: "俺 / 僕 / 私" },
-  { key: "likes", label: "好きなこと", placeholder: "フットサル、旅行、料理など" },
-  { key: "values", label: "価値観", placeholder: "誠実さを大事にする、自由を重視 など" },
-  { key: "dialect", label: "方言・話し方", placeholder: "関西弁、標準語、テンポ早め など" },
+  { key: "dialect", label: "話し方・口調", placeholder: "関西弁、フランク、丁寧 など" },
+  { key: "age", label: "年齢", placeholder: "32歳" },
+  { key: "job", label: "職業", placeholder: "商社、エンジニア など" },
+  { key: "area", label: "住んでるエリア", placeholder: "横浜、大阪 など" },
+  { key: "likes", label: "趣味・好きなこと", placeholder: "フットサル、旅行、料理など\n具体的なエピソードがあると返信精度が上がります", multiline: true },
+  { key: "values", label: "性格", placeholder: "明るい、冗談多め、のんびり など" },
+  { key: "weekends", label: "休日の過ごし方", placeholder: "山登り、カフェ巡り、家でまったり など" },
+  { key: "strengths", label: "自慢・エピソード", placeholder: "料理が得意、旅行10カ国 など" },
+  { key: "idealPartner", label: "理想の相手", placeholder: "一緒に笑える人、好奇心旺盛な人 など" },
   {
     key: "sampleReplies",
     label: "自分の返信サンプル（複数可）",
-    placeholder: "実際に送ったメッセージを複数貼ってください。多いほど精度が上がります。\n---\nそれ面白そうやん！どこ行ったん？\n---\nわかるわーそれ笑　俺もよくあるわ\n---\nへえ、意外やな。もっと教えて",
+    placeholder: "実際に送ったメッセージを複数貼ってください。多いほど精度が上がります。\n---\nそれ面白そうやん！どこ行ったん？\n---\nわかるわーそれ笑　俺もよくあるわ",
     multiline: true,
   },
-  { key: "freeText", label: "自由記述", placeholder: "その他、AIに伝えたいことなんでも", multiline: true },
+  { key: "freeText", label: "その他・自由記述", placeholder: "AIに伝えたいことがあれば何でも", multiline: true },
 ];
 
 interface ProfileModalProps {

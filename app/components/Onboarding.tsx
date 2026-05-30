@@ -37,15 +37,17 @@ type FormState = ProfileFormData & { firstPerson: string; dialect: string };
 function mapToProfile(form: FormState): Profile {
   return {
     firstPerson: form.firstPerson,
-    likes: form.hobbies,
-    values: form.idealPartner,
     dialect: form.dialect,
+    age: form.age,
+    job: form.job,
+    area: form.area,
+    likes: form.hobbies,
+    values: form.personality,
+    weekends: form.weekends,
+    strengths: form.strengths,
+    idealPartner: form.idealPartner,
     sampleReplies: "",
-    freeText: [
-      form.personality && `性格：${form.personality}`,
-      form.weekends && `休日の過ごし方：${form.weekends}`,
-      form.strengths && `自慢・得意なこと：${form.strengths}`,
-    ].filter(Boolean).join("\n"),
+    freeText: "",
   };
 }
 

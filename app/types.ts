@@ -37,9 +37,15 @@ export type Result = ReplyResult | TopicsResult | DateResult | ProfileResult;
 
 export type Profile = {
   firstPerson: string;
-  likes: string;
-  values: string;
   dialect: string;
+  age: string;
+  job: string;
+  area: string;
+  likes: string;
+  values: string;      // 性格
+  weekends: string;
+  strengths: string;
+  idealPartner: string;
   sampleReplies: string;
   freeText: string;
 };
@@ -54,9 +60,15 @@ export type Contact = {
 
 export const EMPTY_PROFILE: Profile = {
   firstPerson: "",
+  dialect: "",
+  age: "",
+  job: "",
+  area: "",
   likes: "",
   values: "",
-  dialect: "",
+  weekends: "",
+  strengths: "",
+  idealPartner: "",
   sampleReplies: "",
   freeText: "",
 };
@@ -80,9 +92,15 @@ export function hasProfile(p: Profile): boolean {
 export function formatProfileForPrompt(p: Profile): string {
   const lines: string[] = [];
   if (p.firstPerson) lines.push(`一人称：${p.firstPerson}`);
-  if (p.likes) lines.push(`好きなこと：${p.likes}`);
-  if (p.values) lines.push(`価値観：${p.values}`);
-  if (p.dialect) lines.push(`方言・話し方：${p.dialect}`);
+  if (p.dialect) lines.push(`話し方・口調：${p.dialect}`);
+  if (p.age) lines.push(`年齢：${p.age}`);
+  if (p.job) lines.push(`職業：${p.job}`);
+  if (p.area) lines.push(`居住エリア：${p.area}`);
+  if (p.likes) lines.push(`好きなこと・趣味：${p.likes}`);
+  if (p.values) lines.push(`性格：${p.values}`);
+  if (p.weekends) lines.push(`休日の過ごし方：${p.weekends}`);
+  if (p.strengths) lines.push(`自慢・得意なこと：${p.strengths}`);
+  if (p.idealPartner) lines.push(`理想の相手：${p.idealPartner}`);
   if (p.sampleReplies) lines.push(`【返信スタイルのサンプル（このトーン・文体・テンションを完全に真似すること）】\n${p.sampleReplies}`);
   if (p.freeText) lines.push(`その他：${p.freeText}`);
   return lines.join("\n");
