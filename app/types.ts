@@ -50,6 +50,7 @@ export type Profile = {
   sampleReplies: string;
   freeText: string;
   profileText: string;
+  app: string;
 };
 
 export type Contact = {
@@ -75,6 +76,7 @@ export const EMPTY_PROFILE: Profile = {
   sampleReplies: "",
   freeText: "",
   profileText: "",
+  app: "Omiai",
 };
 
 export function isTopicsResult(r: Result): r is TopicsResult {

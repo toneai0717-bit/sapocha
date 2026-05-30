@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
-import type { Profile } from "../types";
+import type { Profile, ProfileOutput } from "../types";
+
+const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
 
 const FIELDS: { key: keyof Profile; label: string; placeholder: string; multiline?: boolean }[] = [
   { key: "name", label: "名前・ニックネーム", placeholder: "たいゆう、たい など" },
@@ -28,11 +30,56 @@ interface ProfileModalProps {
   onFieldChange: (field: keyof Profile, value: string) => void;
   onSave: () => void;
   onClose: () => void;
-  onGenerateProfile?: () => void;
+  storedKey: string;
 }
 
-export default function ProfileModal({ profile, onFieldChange, onSave, onClose, onGenerateProfile }: ProfileModalProps) {
+export default function ProfileModal({ profile, onFieldChange, onSave, onClose, storedKey }: ProfileModalProps) {
   const [copied, setCopied] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generatedProfiles, setGeneratedProfiles] = useState<ProfileOutput[]>([]);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [pickedIndex, setPickedIndex] = useState<number | null>(null);
+
+  const generate = async () => {
+    setGenerating(true);
+    setGenError(null);
+    setGeneratedProfiles([]);
+    setPickedIndex(null);
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (storedKey) headers["Authorization"] = `Bearer ${storedKey}`;
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name: profile.name,
+          firstPerson: profile.firstPerson,
+          dialect: profile.dialect,
+          age: profile.age,
+          job: profile.job,
+          area: profile.area,
+          hobbies: profile.likes,
+          personality: profile.values,
+          weekends: profile.weekends,
+          strengths: profile.strengths,
+          idealPartner: profile.idealPartner,
+          app: profile.app,
+        }),
+      });
+      const data = await res.json() as { profiles?: ProfileOutput[]; error?: string };
+      if (data.error) throw new Error(data.error);
+      setGeneratedProfiles(data.profiles ?? []);
+    } catch (e) {
+      setGenError(e instanceof Error ? e.message : "エラーが発生しました");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const useThisProfile = (text: string, index: number) => {
+    onFieldChange("profileText", text);
+    setPickedIndex(index);
+  };
 
   const copyProfileText = async () => {
     if (!profile.profileText) return;
@@ -43,41 +90,103 @@ export default function ProfileModal({ profile, onFieldChange, onSave, onClose, 
     } catch {}
   };
 
+  const BADGE_COLORS: Record<string, string> = {
+    "誠実系": "bg-blue-100 text-blue-700",
+    "親しみやすい系": "bg-amber-100 text-amber-700",
+    "フレンドリー系": "bg-green-100 text-green-700",
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
       <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-base font-semibold text-slate-900 mb-1">プロフィール設定</h2>
         <p className="text-xs text-slate-500 mb-4">入力した内容をもとに返信のキャラを合わせます。</p>
 
-        {/* 保存済みプロフィール文 */}
+        {/* プロフィール文セクション */}
         <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold text-amber-700">📋 プロフィール文</p>
-            <div className="flex items-center gap-2">
-              {onGenerateProfile && (
-                <button
-                  onClick={onGenerateProfile}
-                  className="text-xs text-amber-600 hover:text-amber-700 font-medium px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors"
-                >
-                  ✨ 生成する
-                </button>
+            <button
+              onClick={generate}
+              disabled={generating}
+              className="text-xs font-semibold text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              {generating ? "生成中..." : generatedProfiles.length > 0 ? "✨ 再生成" : "✨ 生成する"}
+            </button>
+          </div>
+
+          {genError && <p className="text-xs text-red-500 mb-2">{genError}</p>}
+
+          {/* 生成結果（3パターン） */}
+          {generatedProfiles.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {generatedProfiles.map((p, i) => (
+                <div key={i} className="bg-white rounded-xl p-3 border border-amber-100">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${BADGE_COLORS[p.type] ?? "bg-slate-100 text-slate-600"}`}>
+                      {p.type}
+                    </span>
+                    <button
+                      onClick={() => useThisProfile(p.text, i)}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
+                        pickedIndex === i
+                          ? "bg-amber-500 text-white"
+                          : "text-amber-600 hover:bg-amber-50 border border-amber-200"
+                      }`}
+                    >
+                      {pickedIndex === i ? "✓ 使用中" : "これを使う"}
+                    </button>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">{p.text}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 保存済みプロフィール文 */}
+          {profile.profileText ? (
+            <>
+              {generatedProfiles.length > 0 && (
+                <p className="text-xs font-semibold text-slate-500 mb-1.5">保存中のプロフィール文</p>
               )}
-              {profile.profileText && (
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">{profile.profileText}</p>
                 <button
                   onClick={copyProfileText}
-                  className="text-xs text-amber-600 hover:text-amber-700 font-medium px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors"
+                  className="text-xs text-amber-600 hover:text-amber-700 font-medium px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors shrink-0"
                 >
                   {copied ? "✓ コピー済み" : "コピー"}
                 </button>
-              )}
-            </div>
-          </div>
-          {profile.profileText ? (
-            <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{profile.profileText}</p>
+              </div>
+            </>
           ) : (
-            <p className="text-xs text-slate-400">まだ保存されていません。「✨ 生成する」でプロフィール文を作れます。</p>
+            generatedProfiles.length === 0 && !generating && (
+              <p className="text-xs text-slate-400">「✨ 生成する」でプロフィール文を作れます。</p>
+            )
           )}
         </div>
+
+        {/* 使うアプリ */}
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-slate-600 mb-1.5">使うアプリ</label>
+          <div className="flex gap-2 flex-wrap">
+            {APP_OPTIONS.map((a) => (
+              <button
+                key={a}
+                onClick={() => onFieldChange("app", a)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                  profile.app === a
+                    ? "bg-amber-500 text-white border-amber-500"
+                    : "bg-slate-50 text-slate-500 border-slate-200 hover:border-amber-300"
+                }`}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* その他フィールド */}
         <div className="space-y-4">
           {FIELDS.map(({ key, label, placeholder, multiline }) => (
             <div key={key}>
@@ -102,6 +211,7 @@ export default function ProfileModal({ profile, onFieldChange, onSave, onClose, 
             </div>
           ))}
         </div>
+
         <div className="flex gap-2 mt-5">
           <button
             onClick={onClose}

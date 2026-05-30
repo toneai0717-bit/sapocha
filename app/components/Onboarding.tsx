@@ -49,6 +49,7 @@ function mapToProfile(form: FormState): Profile {
     sampleReplies: "",
     freeText: "",
     profileText: "",
+    app: form.app,
   };
 }
 
