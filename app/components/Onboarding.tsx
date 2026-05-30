@@ -50,6 +50,20 @@ function mapToProfile(form: FormState): Profile {
   };
 }
 
+const DEV_TEST_DATA: FormState = {
+  firstPerson: "俺",
+  dialect: "関西弁、フランク",
+  age: "32歳",
+  job: "自動車関連の商社",
+  area: "横浜",
+  hobbies: "・スノーボード（小学生からやってます。去年は長野に3回！）\n・フットサル（職場の人と定期的に）\n・読書（本屋大賞の作品をよく読みます）\n・ジグソーパズル（今2016ピースに挑戦中）\n・U-NEXTでプレミアリーグと映画（お風呂で入浴剤入れてスマホ防水して見るのがマイブーム）",
+  personality: "明るい、冗談多め",
+  weekends: "フットサル、山登り、公園散歩、お風呂で映画鑑賞",
+  strengths: "お風呂で映画を見る技術（入浴剤＋防水スマホで最高の環境を構築済み）",
+  idealPartner: "一緒に笑える人、好奇心旺盛な方",
+  app: "Omiai",
+};
+
 interface OnboardingProps {
   storedKey: string;
   onComplete: (profile: Profile) => void;
@@ -145,9 +159,19 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
               <h2 className="text-xl font-black text-slate-900">あなたのことを教えてください</h2>
               <p className="text-xs text-slate-400 mt-1">返信があなたらしくなります。後からいつでも編集できます。</p>
             </div>
-            <button onClick={onSkip} className="text-xs text-slate-400 hover:text-slate-600 mt-1 shrink-0">
-              スキップ
-            </button>
+            <div className="flex items-center gap-2 mt-1 shrink-0">
+              {process.env.NODE_ENV === "development" && (
+                <button
+                  onClick={() => setForm(DEV_TEST_DATA)}
+                  className="text-xs bg-slate-800 text-white px-2.5 py-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                >
+                  🧪 テスト入力
+                </button>
+              )}
+              <button onClick={onSkip} className="text-xs text-slate-400 hover:text-slate-600">
+                スキップ
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
