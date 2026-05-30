@@ -125,6 +125,13 @@ export default function Home() {
     setShowProfile(false);
   };
 
+  const saveProfileText = (text: string) => {
+    const updated = { ...savedProfile, profileText: text };
+    setSavedProfile(updated);
+    setProfile(updated);
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(updated)); } catch {}
+  };
+
   const updateField = (field: keyof Profile, value: string) => {
     setProfile((prev) => ({ ...prev, [field]: value }));
   };
@@ -789,7 +796,11 @@ export default function Home() {
 
         {/* Results */}
         {result && isProfileResult(result) && (
-          <ProfileResultCards profiles={result.profiles} />
+          <ProfileResultCards
+            profiles={result.profiles}
+            onSave={saveProfileText}
+            savedText={savedProfile.profileText}
+          />
         )}
 
         {result && !isProfileResult(result) && (

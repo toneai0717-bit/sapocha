@@ -48,6 +48,7 @@ function mapToProfile(form: FormState): Profile {
     idealPartner: form.idealPartner,
     sampleReplies: "",
     freeText: "",
+    profileText: "",
   };
 }
 

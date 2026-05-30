@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import type { Profile } from "../types";
 
 const FIELDS: { key: keyof Profile; label: string; placeholder: string; multiline?: boolean }[] = [
@@ -30,11 +31,38 @@ interface ProfileModalProps {
 }
 
 export default function ProfileModal({ profile, onFieldChange, onSave, onClose }: ProfileModalProps) {
+  const [copied, setCopied] = useState(false);
+
+  const copyProfileText = async () => {
+    if (!profile.profileText) return;
+    try {
+      await navigator.clipboard.writeText(profile.profileText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
       <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <h2 className="text-base font-semibold text-slate-900 mb-1">自分について</h2>
-        <p className="text-xs text-slate-500 mb-5">入力した内容をもとに返信のキャラを合わせます。</p>
+        <p className="text-xs text-slate-500 mb-4">入力した内容をもとに返信のキャラを合わせます。</p>
+
+        {/* 保存済みプロフィール文 */}
+        {profile.profileText && (
+          <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-amber-700">📋 保存したプロフィール文</p>
+              <button
+                onClick={copyProfileText}
+                className="text-xs text-amber-600 hover:text-amber-700 font-medium px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors"
+              >
+                {copied ? "✓ コピー済み" : "コピー"}
+              </button>
+            </div>
+            <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">{profile.profileText}</p>
+          </div>
+        )}
         <div className="space-y-4">
           {FIELDS.map(({ key, label, placeholder, multiline }) => (
             <div key={key}>

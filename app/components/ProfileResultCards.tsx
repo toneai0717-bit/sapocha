@@ -4,11 +4,14 @@ import type { ProfileOutput } from "../types";
 
 interface ProfileResultCardsProps {
   profiles: ProfileOutput[];
+  onSave?: (text: string) => void;
+  savedText?: string;
 }
 
-export default function ProfileResultCards({ profiles }: ProfileResultCardsProps) {
+export default function ProfileResultCards({ profiles, onSave, savedText }: ProfileResultCardsProps) {
   const [editedTexts, setEditedTexts] = useState<string[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [savedIndex, setSavedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setEditedTexts(profiles.map((p) => p.text));
@@ -52,6 +55,18 @@ export default function ProfileResultCards({ profiles }: ProfileResultCardsProps
               <span className="text-xs text-slate-400">
                 {(editedTexts[i] ?? profile.text).length}文字
               </span>
+              {onSave && (
+                <button
+                  onClick={() => {
+                    onSave(editedTexts[i] ?? profile.text);
+                    setSavedIndex(i);
+                    setTimeout(() => setSavedIndex(null), 2000);
+                  }}
+                  className="text-xs text-slate-400 hover:text-green-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-green-50 active:bg-green-100"
+                >
+                  {savedIndex === i ? "✓ 保存済み" : "保存する"}
+                </button>
+              )}
               <button
                 onClick={() => copy(editedTexts[i] ?? profile.text, i)}
                 className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-white/60 active:bg-white"

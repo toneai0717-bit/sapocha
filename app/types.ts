@@ -49,6 +49,7 @@ export type Profile = {
   idealPartner: string;
   sampleReplies: string;
   freeText: string;
+  profileText: string;
 };
 
 export type Contact = {
@@ -73,6 +74,7 @@ export const EMPTY_PROFILE: Profile = {
   idealPartner: "",
   sampleReplies: "",
   freeText: "",
+  profileText: "",
 };
 
 export function isTopicsResult(r: Result): r is TopicsResult {
