@@ -27,7 +27,7 @@ function LottieHero() {
   );
 }
 
-const APP_OPTIONS = ["Pairs", "with", "タップル", "Tinder", "その他"];
+const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
 
 type OnboardingStep = "welcome" | "form" | "result";
 

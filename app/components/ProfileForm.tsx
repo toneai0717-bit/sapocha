@@ -2,7 +2,7 @@
 import { useState } from "react";
 import type { ProfileFormData } from "../types";
 
-const APP_OPTIONS = ["Pairs", "with", "タップル", "Tinder", "その他"];
+const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
 
 interface ProfileFormProps {
   onSubmit: (data: ProfileFormData) => void;
