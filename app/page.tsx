@@ -19,7 +19,7 @@ function isDateResult(r: Result): r is DateResult { return "courses" in r; }
 
 const FEATURE_MODES: { key: FeatureMode; label: string; icon: string }[] = [
   { key: "reply",  label: "返信サポート", icon: "💬" },
-  { key: "topics", label: "話す内容",     icon: "💡" },
+  { key: "topics", label: "デートの話題", icon: "💡" },
   { key: "date",   label: "デートコース", icon: "🗓" },
 ];
 type Profile = {
@@ -586,6 +586,11 @@ export default function Home() {
         {/* Image mode */}
         {featureMode !== "date" && mode === "image" && (
           <>
+            {featureMode === "topics" && (
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-3">
+                💡 相手のプロフィールスクショを貼ると精度が上がります。会話スクショでもOK。
+              </p>
+            )}
             <div
               className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm
                 ${dragging
@@ -610,9 +615,11 @@ export default function Home() {
               ) : (
                 <div className="text-center">
                   <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-3xl mx-auto mb-3">
-                    📸
+                    {featureMode === "topics" ? "👤" : "📸"}
                   </div>
-                  <p className="text-slate-600 text-sm font-medium">タップしてスクショを選ぶ</p>
+                  <p className="text-slate-600 text-sm font-medium">
+                    {featureMode === "topics" ? "プロフィール or 会話のスクショを選ぶ" : "タップしてスクショを選ぶ"}
+                  </p>
                   <p className="text-slate-400 text-xs mt-1 hidden sm:block">ドラッグ&ドロップ・Ctrl+V でも可</p>
                 </div>
               )}
@@ -630,7 +637,7 @@ export default function Home() {
                   disabled={loading}
                   className="flex-1 py-4 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
                 >
-                  {loading ? "解析中..." : result ? "再生成" : "返信案を生成する"}
+                  {loading ? "解析中..." : result ? "再生成" : featureMode === "topics" ? "話題を提案する" : "返信案を生成する"}
                 </button>
               </div>
             )}
