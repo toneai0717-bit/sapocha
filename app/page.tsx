@@ -296,10 +296,10 @@ export default function Home() {
             </button>
           </div>
           <p className="mt-2 text-slate-700 text-sm font-medium leading-relaxed">
-            マッチングアプリ、全部AIに任せろ。
+            マッチングアプリの悩み、AIが一緒に考えます。
           </p>
           <p className="text-slate-400 text-xs mt-1 leading-relaxed">
-            返信・話す内容・デートコースまで。あなたの恋愛をまるごとサポートします。
+            返信・話す内容・デートコースまで。あなたの恋愛をそっとサポート。
           </p>
         </div>
 
