@@ -161,15 +161,6 @@ export default function Home() {
     }
   };
 
-  const appendSituation = useCallback((situation: string, currentContacts: Contact[]) => {
-    if (!selectedContactId) return;
-    const updated = currentContacts.map((c) =>
-      c.id === selectedContactId
-        ? { ...c, situationHistory: [...c.situationHistory.slice(-9), situation] }
-        : c
-    );
-    saveContacts(updated);
-  }, [selectedContactId, saveContacts]);
 
   const getHistoryContext = useCallback((): string => {
     const contact = contacts.find((c) => c.id === selectedContactId);
@@ -241,7 +232,8 @@ export default function Home() {
               ? { ...c, situationHistory: [...c.situationHistory.slice(-9), data.situation as string] }
               : c
           );
-          localStorage.setItem(CONTACTS_KEY, JSON.stringify(updated));
+          // localStorage更新はstate updaterの外で行う
+          setTimeout(() => localStorage.setItem(CONTACTS_KEY, JSON.stringify(updated)), 0);
           return updated;
         });
       }
@@ -445,7 +437,7 @@ export default function Home() {
           {FEATURE_MODES.map(({ key, label, icon }) => (
             <button
               key={key}
-              onClick={() => { setFeatureMode(key); setResult(null); setError(null); }}
+              onClick={() => { setFeatureMode(key); setResult(null); setError(null); setPreview(null); }}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                 featureMode === key
                   ? "bg-amber-500 text-white border-amber-500 shadow-sm"
@@ -504,7 +496,7 @@ export default function Home() {
               <input
                 type="text"
                 value={area}
-                onChange={(e) => setArea(e.target.value)}
+                onChange={(e) => { setArea(e.target.value); setResult(null); }}
                 placeholder="例：梅田、渋谷、名古屋"
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
               />
@@ -550,7 +542,7 @@ export default function Home() {
               <input
                 type="text"
                 value={dateInterests}
-                onChange={(e) => setDateInterests(e.target.value)}
+                onChange={(e) => { setDateInterests(e.target.value); setResult(null); }}
                 placeholder="例：カフェ巡り、映画、アウトドア"
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
               />
@@ -688,7 +680,7 @@ export default function Home() {
         {result && (
           <div className="mt-5 space-y-3">
             <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
-              <p className="text-xs text-slate-500 leading-relaxed">{result.situation}</p>
+              <p className="text-xs text-slate-500 leading-relaxed">{result.situation ?? ""}</p>
             </div>
 
             {/* Reply results */}

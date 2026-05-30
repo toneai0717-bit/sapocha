@@ -32,11 +32,7 @@ const TOPICS_PROMPT = `あなたはデートコーチです。
 }`;
 
 const DATE_PROMPT = `あなたはマッチングアプリのデートプランナーです。
-会話のスクリーンショットから相手の興味・性格・関係性を読み取り、デートコースを3つ提案してください。
-
-【画像の読み取り方】
-- 画面の右側が「自分」、左側が「相手」です。
-- 相手の趣味・好み・雰囲気を読み取ること。
+入力された条件をもとに、初デートのコースを3つ提案してください。
 
 【デートコースのルール】
 - 初デートを想定（重すぎず、軽すぎず）。
@@ -116,7 +112,7 @@ export async function POST(req: NextRequest) {
     const { image, mediaType, profile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget } = await req.json();
     const safeMode = ["reply", "topics", "date"].includes(mode) ? mode : "reply";
 
-    if (!image && !text) {
+    if (safeMode !== "date" && !image && !text) {
       return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
     }
     if (image && image.length > MAX_BASE64_LENGTH) {
@@ -169,7 +165,9 @@ export async function POST(req: NextRequest) {
       userInstruction = "このスクリーンショットの会話を分析して、返信案を3つ提案してください。";
     }
 
-    const messageContent = image
+    const messageContent = safeMode === "date"
+      ? [{ type: "text" as const, text: userInstruction }]
+      : image
       ? [
           {
             type: "image" as const,
