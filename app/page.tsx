@@ -7,6 +7,7 @@ import ProfileModal from "./components/ProfileModal";
 import AddContactModal from "./components/AddContactModal";
 import EditContactModal from "./components/EditContactModal";
 import ContactSelector from "./components/ContactSelector";
+import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
 import {
   type InputMode,
   type FeatureMode,
@@ -50,6 +51,8 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [editedReplies, setEditedReplies] = useState<string[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState<Profile>(EMPTY_PROFILE);
@@ -71,6 +74,7 @@ export default function Home() {
     if (result && !isTopicsResult(result) && !isDateResult(result)) {
       setEditedReplies(result.replies.map((r) => r.message));
     }
+    if (!result) setChatMessages([]);
   }, [result]);
 
   useEffect(() => {
@@ -210,6 +214,7 @@ export default function Home() {
     }
     setLoading(true);
     setError(null);
+    setChatMessages([]);
     try {
       const historyContext = getHistoryContext();
       const images = previews.map((p, i) => ({
@@ -256,6 +261,47 @@ export default function Home() {
       setError(e instanceof Error ? e.message : "エラーが発生しました");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const buildResultContext = (r: Result): string => {
+    const lines = [`【状況】\n${r.situation ?? ""}`];
+    if (isTopicsResult(r)) {
+      lines.push("\n【提案した話題】");
+      r.topics.forEach((t, i) => lines.push(`${i + 1}. ${t.title}：${t.starter}`));
+    } else if (isDateResult(r)) {
+      lines.push("\n【提案したデートコース】");
+      r.courses.forEach((c, i) => lines.push(`${i + 1}. ${c.theme}：${c.spots.map((s) => s.name).join(" → ")}`));
+    } else {
+      lines.push("\n【提案した返信案】");
+      const msgs = editedReplies.length > 0 ? editedReplies : r.replies.map((rep) => rep.message);
+      msgs.forEach((msg, i) => lines.push(`案${i + 1}：${msg}`));
+    }
+    return lines.join("\n");
+  };
+
+  const sendChat = async (text: string) => {
+    if (!text.trim() || !result) return;
+    const userMsg: ChatMessage = { role: "user", content: text.trim() };
+    const next = [...chatMessages, userMsg];
+    setChatMessages(next);
+    setChatLoading(true);
+    try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (storedKey) headers["Authorization"] = `Bearer ${storedKey}`;
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ messages: next, context: buildResultContext(result) }),
+      });
+      if (res.status === 401) { setShowAuthPrompt(true); return; }
+      const data = await res.json() as { message?: string; error?: string };
+      if (data.error) throw new Error(data.error);
+      setChatMessages([...next, { role: "assistant", content: data.message ?? "" }]);
+    } catch (e) {
+      setChatMessages([...next, { role: "assistant", content: "エラーが発生しました。もう一度お試しください。" }]);
+    } finally {
+      setChatLoading(false);
     }
   };
 
@@ -735,6 +781,14 @@ export default function Home() {
               </div>
             ))}
           </div>
+        )}
+
+        {result && (
+          <ChatPanel
+            messages={chatMessages}
+            loading={chatLoading}
+            onSend={sendChat}
+          />
         )}
       </div>
     </div>
