@@ -52,15 +52,15 @@ function mapToProfile(form: FormState): Profile {
 
 const DEV_TEST_DATA: FormState = {
   firstPerson: "僕",
-  dialect: "関西弁、フランク",
+  dialect: "関西弁だが、仲良くなるまでは丁寧語",
   age: "32歳",
   job: "自動車関連の商社",
   area: "横浜",
-  hobbies: "・スノーボード（小学生からやってます。去年は長野に3回！）\n・フットサル（職場の人と定期的に）\n・読書（本屋大賞の作品をよく読みます）\n・ジグソーパズル（今2016ピースに挑戦中）\n・U-NEXTでプレミアリーグと映画（お風呂で入浴剤入れてスマホ防水して見るのがマイブーム）",
+  hobbies: "・フットサル（職場の人と定期的に）\n・読書（本屋大賞の作品をよく読みます）\n・U-NEXTでプレミアリーグと映画（お風呂で入浴剤入れてスマホ防水して見るのがマイブーム）",
   personality: "明るい、冗談多め",
   weekends: "フットサル、山登り、公園散歩、お風呂で映画鑑賞",
   strengths: "お風呂で映画を見る技術（入浴剤＋防水スマホで最高の環境を構築済み）",
-  idealPartner: "一緒に笑える人、好奇心旺盛な方",
+  idealPartner: "前向きな方、笑顔が多い方、好奇心旺盛な方",
   app: "Omiai",
 };
 
