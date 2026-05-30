@@ -310,18 +310,27 @@ export default function Home() {
           <div className="flex items-start justify-between">
             <h1
               className="text-4xl font-black tracking-tight text-slate-900 cursor-pointer select-none"
-              onClick={() => { setPreviews([]); setMediaTypes([]); setResult(null); setError(null); setConversationText(""); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              onClick={() => { window.location.href = "/"; }}
             >
               サポ<span className="text-amber-500">チャ</span>
             </h1>
-            <button
-              onClick={() => { setProfile(savedProfile); setShowProfile(true); }}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors mt-1.5 bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
-            >
-              <span>⚙</span>
-              <span>自分設定</span>
-              {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />}
-            </button>
+            <div className="flex items-center gap-2 mt-1.5">
+              <button
+                onClick={() => window.location.reload()}
+                className="text-xs text-slate-400 hover:text-slate-600 transition-colors bg-white hover:bg-slate-50 border border-slate-200 px-2.5 py-2 rounded-xl shadow-sm"
+                title="リロード"
+              >
+                ↺
+              </button>
+              <button
+                onClick={() => { setProfile(savedProfile); setShowProfile(true); }}
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
+              >
+                <span>⚙</span>
+                <span>自分設定</span>
+                {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />}
+              </button>
+            </div>
           </div>
           <p className="mt-2 text-slate-700 text-sm font-medium leading-relaxed">
             マッチングアプリの悩み、AIが一緒に考えます。
