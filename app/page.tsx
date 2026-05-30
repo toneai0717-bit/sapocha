@@ -33,6 +33,7 @@ type Profile = {
 type Contact = {
   id: string;
   name: string;
+  profile: string;
   situationHistory: string[];
   createdAt: number;
 };
@@ -92,6 +93,8 @@ export default function Home() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
   const [showAddContact, setShowAddContact] = useState(false);
   const [newContactName, setNewContactName] = useState("");
+  const [newContactProfile, setNewContactProfile] = useState("");
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -132,6 +135,7 @@ export default function Home() {
     const newContact: Contact = {
       id: Date.now().toString(),
       name: newContactName.trim(),
+      profile: newContactProfile.trim(),
       situationHistory: [],
       createdAt: Date.now(),
     };
@@ -141,6 +145,15 @@ export default function Home() {
     localStorage.setItem(SELECTED_CONTACT_KEY, newContact.id);
     setNewContactName("");
     setShowAddContact(false);
+  };
+
+  const saveEditContact = () => {
+    if (!editingContact) return;
+    const updated = contacts.map((c) =>
+      c.id === editingContact.id ? { ...editingContact } : c
+    );
+    saveContacts(updated);
+    setEditingContact(null);
   };
 
   const selectContact = (id: string) => {
@@ -226,13 +239,14 @@ export default function Home() {
         data: p.split(",")[1],
         mediaType: mediaTypes[i] ?? "image/jpeg",
       }));
+      const contactProfile = contacts.find((c) => c.id === selectedContactId)?.profile ?? "";
       const body = featureMode === "date"
-        ? { profile: formatProfileForPrompt(savedProfile), mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
+        ? { profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
         : featureMode === "topics"
-          ? { images, profile: formatProfileForPrompt(savedProfile), mode: featureMode, history: historyContext, dateNumber }
+          ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, history: historyContext, dateNumber }
           : mode === "image"
-            ? { images, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area }
-            : { text: conversationText, profile: formatProfileForPrompt(savedProfile), tone, history: historyContext, mode: featureMode, area };
+            ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, tone, history: historyContext, mode: featureMode, area }
+            : { text: conversationText, profile: formatProfileForPrompt(savedProfile), contactProfile, tone, history: historyContext, mode: featureMode, area };
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -319,10 +333,10 @@ export default function Home() {
         <div className="mb-4">
           <div className="flex items-center gap-2 flex-wrap">
             {contacts.map((c) => (
-              <div key={c.id} className="relative group">
+              <div key={c.id} className="relative group flex items-center">
                 <button
                   onClick={() => selectContact(c.id)}
-                  className={`pl-3 pr-7 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                  className={`pl-3 pr-12 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                     selectedContactId === c.id
                       ? "bg-slate-800 text-white border-slate-800"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
@@ -330,17 +344,24 @@ export default function Home() {
                 >
                   {c.name}
                   {c.situationHistory.length > 0 && (
-                    <span className={`ml-1 text-xs ${selectedContactId === c.id ? "text-amber-300" : "text-amber-400"}`}>
-                      ●
-                    </span>
+                    <span className={`ml-1 text-xs ${selectedContactId === c.id ? "text-amber-300" : "text-amber-400"}`}>●</span>
+                  )}
+                  {c.profile && (
+                    <span className={`ml-1 text-xs ${selectedContactId === c.id ? "text-blue-300" : "text-blue-400"}`}>i</span>
                   )}
                 </button>
                 <button
+                  onClick={(e) => { e.stopPropagation(); setEditingContact({ ...c }); }}
+                  className={`absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
+                    selectedContactId === c.id ? "text-slate-400 hover:text-white" : "text-slate-300 hover:text-slate-500"
+                  }`}
+                >
+                  ✎
+                </button>
+                <button
                   onClick={() => deleteContact(c.id)}
-                  className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
-                    selectedContactId === c.id
-                      ? "text-slate-400 hover:text-white"
-                      : "text-slate-300 hover:text-slate-500"
+                  className={`absolute right-1 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full flex items-center justify-center text-xs transition-colors ${
+                    selectedContactId === c.id ? "text-slate-400 hover:text-white" : "text-slate-300 hover:text-slate-500"
                   }`}
                 >
                   ×
@@ -424,18 +445,27 @@ export default function Home() {
               <p className="text-xs text-slate-500 mb-4">
                 会話の流れを相手ごとに記憶します。
               </p>
-              <input
-                type="text"
-                value={newContactName}
-                onChange={(e) => setNewContactName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addContact()}
-                placeholder="名前（例：ひなちゃん）"
-                autoFocus
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
-              />
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={newContactName}
+                  onChange={(e) => setNewContactName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addContact()}
+                  placeholder="名前（例：ひなちゃん）"
+                  autoFocus
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+                <textarea
+                  value={newContactProfile}
+                  onChange={(e) => setNewContactProfile(e.target.value)}
+                  placeholder="相手のプロフィール（任意）&#10;例：25歳・看護師・神戸出身・猫好き・料理上手"
+                  rows={3}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                />
+              </div>
               <div className="flex gap-2 mt-4">
                 <button
-                  onClick={() => { setShowAddContact(false); setNewContactName(""); }}
+                  onClick={() => { setShowAddContact(false); setNewContactName(""); setNewContactProfile(""); }}
                   className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
                 >
                   キャンセル
@@ -446,6 +476,54 @@ export default function Home() {
                   className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 text-white transition-colors"
                 >
                   追加
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit contact modal */}
+        {editingContact && (
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl">
+              <h2 className="text-base font-semibold text-slate-900 mb-4">相手の設定</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">名前</label>
+                  <input
+                    type="text"
+                    value={editingContact.name}
+                    onChange={(e) => setEditingContact({ ...editingContact, name: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">プロフィール情報</label>
+                  <textarea
+                    value={editingContact.profile}
+                    onChange={(e) => setEditingContact({ ...editingContact, profile: e.target.value })}
+                    placeholder="年齢・職業・出身・趣味・性格など&#10;例：25歳・看護師・神戸出身・猫好き・料理上手"
+                    rows={5}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">ここに入れた情報をAIが参考にして返信・話題を提案します。</p>
+                </div>
+                {editingContact.situationHistory.length > 0 && (
+                  <p className="text-xs text-slate-400">会話履歴：{editingContact.situationHistory.length}回分保存中</p>
+                )}
+              </div>
+              <div className="flex gap-2 mt-5">
+                <button
+                  onClick={() => setEditingContact(null)}
+                  className="flex-1 py-2.5 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 transition-colors"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={saveEditContact}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-amber-500 hover:bg-amber-400 text-white transition-colors"
+                >
+                  保存
                 </button>
               </div>
             </div>
@@ -709,11 +787,17 @@ export default function Home() {
         {featureMode !== "date" && mode === "text" && (
           <>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-              <p className="text-xs text-slate-400 mb-2">会話をそのままコピペしてください</p>
+              <p className="text-xs text-slate-400 mb-2">
+                {featureMode === "topics"
+                  ? "相手のプロフィール情報や会話内容を貼り付けてください"
+                  : "会話をそのままコピペしてください"}
+              </p>
               <textarea
                 value={conversationText}
                 onChange={(e) => { setConversationText(e.target.value); setResult(null); }}
-                placeholder={"相手: こんにちは！\n自分: はじめまして！\n相手: 趣味は何ですか？"}
+                placeholder={featureMode === "topics"
+                  ? "例：25歳・看護師・神戸出身・猫が好き・休日はカフェ巡り\n\n---または会話---\n相手: 最近カフェ巡りにはまってます！\n自分: いいですね！どんなカフェが好きですか？"
+                  : "相手: こんにちは！\n自分: はじめまして！\n相手: 趣味は何ですか？"}
                 rows={8}
                 className="w-full text-sm text-slate-800 placeholder-slate-300 resize-none focus:outline-none leading-relaxed"
               />

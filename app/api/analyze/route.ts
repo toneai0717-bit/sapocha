@@ -109,7 +109,7 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコ
 
 export async function POST(req: NextRequest) {
   try {
-    const { images, profile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber } = await req.json();
+    const { images, profile, contactProfile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber } = await req.json();
     const safeMode = ["reply", "topics", "date"].includes(mode) ? mode : "reply";
 
     // imagesは配列 [{data: string, mediaType: string}]
@@ -120,6 +120,8 @@ export async function POST(req: NextRequest) {
       : [];
 
     const safeProfile = typeof profile === "string" ? profile.trim().slice(0, 500) : "";
+    const safeContactProfile = typeof contactProfile === "string" ? contactProfile.trim().slice(0, 500) : "";
+    const contactProfileSection = safeContactProfile ? `\n\n【相手のプロフィール】\n${safeContactProfile}` : "";
     const safeTone = ["自然", "盛り上げる", "積極的"].includes(tone) ? tone : "自然";
     const safeArea = typeof area === "string" ? area.trim().slice(0, 50) : "";
     const safeHistory = typeof history === "string" ? history.trim().slice(0, 3000) : "";
@@ -146,7 +148,7 @@ export async function POST(req: NextRequest) {
         : safeDateNumber === "2回目"
         ? "2回目なので、価値観・恋愛観・家族・将来観など、より深い相互開示につながる話題を提案してください。"
         : "3回目以降なので、関係性をさらに深める話題・共通の将来像・次のステップへの布石になる話題を提案してください。";
-      systemPrompt = TOPICS_PROMPT + profileSection + historySection + `\n\n【デートの回数】${safeDateNumber}：${dateNumberGuide}`;
+      systemPrompt = TOPICS_PROMPT + profileSection + contactProfileSection + historySection + `\n\n【デートの回数】${safeDateNumber}：${dateNumberGuide}`;
       userInstruction = safeImages.length > 0
         ? `このスクリーンショットを参考に、${safeDateNumber}のデートで盛り上がる話題を5つ提案してください。`
         : `会話履歴をもとに、${safeDateNumber}のデートで盛り上がる話題を5つ提案してください。`;
@@ -164,7 +166,7 @@ export async function POST(req: NextRequest) {
         safeDateBudget && `予算（おひとり様）：${safeDateBudget}`,
       ].filter(Boolean).join("\n");
       const spotCount = safeDateDuration === "ランチのみ" ? "1〜2箇所" : safeDateDuration === "一日" ? "4〜5箇所" : "2〜3箇所";
-      systemPrompt = DATE_PROMPT + profileSection + `\n\n【デート条件】\n${condSection}`;
+      systemPrompt = DATE_PROMPT + profileSection + contactProfileSection + `\n\n【デート条件】\n${condSection}`;
       userInstruction = `上記の条件でデートコースを3つ提案してください。デートの長さに合わせてスポット数は${spotCount}にし、各スポットに目安費用とコース合計費用を含めてください。`;
     } else {
       const profileSection = safeProfile
@@ -174,7 +176,7 @@ export async function POST(req: NextRequest) {
       const historySection = safeHistory
         ? `\n\n【これまでの会話の流れ（記憶）】\n${safeHistory}\n上記を踏まえ、すでに話したトピックの繰り返しを避け、会話を自然に発展させること。`
         : "";
-      systemPrompt = SYSTEM_PROMPT + profileSection + toneSection + historySection;
+      systemPrompt = SYSTEM_PROMPT + profileSection + contactProfileSection + toneSection + historySection;
       userInstruction = "このスクリーンショットの会話を分析して、返信案を3つ提案してください。";
     }
 
