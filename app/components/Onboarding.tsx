@@ -1,6 +1,32 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import type { Profile, ProfileFormData, ProfileOutput } from "../types";
+
+// Lottie はクライアントのみ（SSR除外）
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
+
+// lottiefiles.com で好きな無料アニメーションのJSONURLに差し替え可能
+const LOTTIE_URL = "https://assets4.lottiefiles.com/packages/lf20_qp1q7mct.json";
+
+function LottieHero() {
+  const [data, setData] = useState<unknown>(null);
+  useEffect(() => {
+    fetch(LOTTIE_URL)
+      .then((r) => r.json())
+      .then((json) => setData(json))
+      .catch(() => {}); // 取得失敗しても表示に影響なし
+  }, []);
+  if (!data) return <div style={{ height: 180 }} />;
+  return (
+    <Lottie
+      animationData={data}
+      loop
+      autoplay
+      style={{ height: 180, width: 180, margin: "0 auto" }}
+    />
+  );
+}
 
 const APP_OPTIONS = ["Pairs", "with", "タップル", "Tinder", "その他"];
 
@@ -69,6 +95,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 flex flex-col items-center justify-center px-6">
         <div className="w-full max-w-sm text-center">
+          <LottieHero />
           <h1 className="text-5xl font-black tracking-tight text-slate-900 mb-2">
             サポ<span className="text-amber-500">チャ</span>
           </h1>
