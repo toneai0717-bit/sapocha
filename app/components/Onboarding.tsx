@@ -51,7 +51,7 @@ function mapToProfile(form: FormState): Profile {
 }
 
 const DEV_TEST_DATA: FormState = {
-  firstPerson: "俺",
+  firstPerson: "僕",
   dialect: "関西弁、フランク",
   age: "32歳",
   job: "自動車関連の商社",
