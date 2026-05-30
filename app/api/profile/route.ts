@@ -20,9 +20,9 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロフ
 
 【アプリ別トーン】
 - Omiai：結婚を強く意識した真剣さが伝わる文体。誠実さ・将来への前向きさを自然に盛り込む。
-  冒頭は「プロフィールを見てくださりありがとうございます！」で始め、末尾は「よろしくお願いします！」で締める。
+  冒頭は「プロフィールを見てくださりありがとうございます！\n{名前}と申します。」で始め（名前が提供されていない場合は名乗りを省略）、末尾は「よろしくお願いします！」で締める。
 - Pairs / with：少し丁寧で真面目さが伝わる文体。
-  冒頭は「プロフィールを見ていただきありがとうございます！」で始め、末尾は「よろしくお願いします！」で締める。
+  冒頭は「プロフィールを見ていただきありがとうございます！\n{名前}です！」で始め（名前が提供されていない場合は名乗りを省略）、末尾は「よろしくお願いします！」で締める。
 - タップル / Tinder：明るく軽めのカジュアルな文体。冒頭・末尾の定型挨拶は不要。自然な入り方で。
 - その他：親しみやすい標準的な文体。冒頭・末尾の挨拶はなくてよい。
 
@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as Record<string, unknown>;
     const {
-      age, job, area, hobbies,
+      name, age, job, area, hobbies,
       personality, weekends, strengths, idealPartner, app,
       firstPerson, dialect,
     } = body;
@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
     const safeStrengths = typeof strengths === "string" ? strengths.trim().slice(0, 200) : "";
     const safeIdealPartner = typeof idealPartner === "string" ? idealPartner.trim().slice(0, 200) : "";
     const safeApp = typeof app === "string" ? app.trim().slice(0, 20) : "Pairs";
+    const safeName = typeof name === "string" ? name.trim().slice(0, 20) : "";
     const safeFirstPerson = typeof firstPerson === "string" ? firstPerson.trim().slice(0, 10) : "";
     const safeDialect = typeof dialect === "string" ? dialect.trim().slice(0, 50) : "";
 
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userMessage = [
+      safeName && `名前・ニックネーム：${safeName}`,
       safeFirstPerson && `一人称：${safeFirstPerson}`,
       safeDialect && `話し方・口調：${safeDialect}`,
       safeAge && `年齢：${safeAge}歳`,

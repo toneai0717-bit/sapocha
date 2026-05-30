@@ -36,6 +36,7 @@ export type ProfileResult = {
 export type Result = ReplyResult | TopicsResult | DateResult | ProfileResult;
 
 export type Profile = {
+  name: string;
   firstPerson: string;
   dialect: string;
   age: string;
@@ -59,6 +60,7 @@ export type Contact = {
 };
 
 export const EMPTY_PROFILE: Profile = {
+  name: "",
   firstPerson: "",
   dialect: "",
   age: "",
@@ -91,6 +93,7 @@ export function hasProfile(p: Profile): boolean {
 
 export function formatProfileForPrompt(p: Profile): string {
   const lines: string[] = [];
+  if (p.name) lines.push(`名前・ニックネーム：${p.name}`);
   if (p.firstPerson) lines.push(`一人称：${p.firstPerson}`);
   if (p.dialect) lines.push(`話し方・口調：${p.dialect}`);
   if (p.age) lines.push(`年齢：${p.age}`);

@@ -31,10 +31,11 @@ const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その
 
 type OnboardingStep = "welcome" | "form" | "result";
 
-type FormState = ProfileFormData & { firstPerson: string; dialect: string };
+type FormState = ProfileFormData & { name: string; firstPerson: string; dialect: string };
 
 function mapToProfile(form: FormState): Profile {
   return {
+    name: form.name,
     firstPerson: form.firstPerson,
     dialect: form.dialect,
     age: form.age,
@@ -51,6 +52,7 @@ function mapToProfile(form: FormState): Profile {
 }
 
 const DEV_TEST_DATA: FormState = {
+  name: "たいゆう",
   firstPerson: "僕",
   dialect: "関西弁だが、仲良くなるまでは丁寧語",
   age: "32歳",
@@ -73,7 +75,7 @@ interface OnboardingProps {
 export default function Onboarding({ storedKey, onComplete, onSkip }: OnboardingProps) {
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const [form, setForm] = useState<FormState>({
-    firstPerson: "", dialect: "", age: "", job: "", area: "",
+    name: "", firstPerson: "", dialect: "", age: "", job: "", area: "",
     hobbies: "", personality: "", weekends: "", strengths: "", idealPartner: "", app: "Pairs",
   });
   const [profiles, setProfiles] = useState<ProfileOutput[]>([]);
@@ -167,6 +169,18 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           </div>
 
           <div className="space-y-4">
+            {/* 名前 */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">名前・ニックネーム</label>
+              <input
+                type="text"
+                value={form.name}
+                onChange={(e) => set("name", e.target.value)}
+                placeholder="たいゆう、たい など"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
+              />
+            </div>
+
             {/* 一人称・話し方 */}
             <div className="grid grid-cols-2 gap-2">
               <div>
