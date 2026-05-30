@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     const {
       age, job, area, hobbies,
       personality, weekends, strengths, idealPartner, app,
+      firstPerson, dialect,
     } = body;
 
     const safeAge = typeof age === "string" ? age.trim().slice(0, 10) : "";
@@ -82,12 +83,16 @@ export async function POST(req: NextRequest) {
     const safeStrengths = typeof strengths === "string" ? strengths.trim().slice(0, 200) : "";
     const safeIdealPartner = typeof idealPartner === "string" ? idealPartner.trim().slice(0, 200) : "";
     const safeApp = typeof app === "string" ? app.trim().slice(0, 20) : "Pairs";
+    const safeFirstPerson = typeof firstPerson === "string" ? firstPerson.trim().slice(0, 10) : "";
+    const safeDialect = typeof dialect === "string" ? dialect.trim().slice(0, 50) : "";
 
     if (!safeAge && !safeJob && !safeHobbies) {
       return NextResponse.json({ error: "情報を入力してください" }, { status: 400 });
     }
 
     const userMessage = [
+      safeFirstPerson && `一人称：${safeFirstPerson}`,
+      safeDialect && `話し方・口調：${safeDialect}`,
       safeAge && `年齢：${safeAge}歳`,
       safeJob && `職業：${safeJob}`,
       safeArea && `居住エリア：${safeArea}`,

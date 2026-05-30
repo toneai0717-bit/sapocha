@@ -10,6 +10,7 @@ import ContactSelector from "./components/ContactSelector";
 import ChatPanel, { type ChatMessage } from "./components/ChatPanel";
 import ProfileForm from "./components/ProfileForm";
 import ProfileResultCards from "./components/ProfileResultCards";
+import Onboarding from "./components/Onboarding";
 import {
   type InputMode,
   type FeatureMode,
@@ -72,6 +73,9 @@ export default function Home() {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [accessKeyInput, setAccessKeyInput] = useState("");
 
+  // Onboarding
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -94,10 +98,26 @@ export default function Home() {
       const storedSelected = localStorage.getItem(SELECTED_CONTACT_KEY);
       if (storedSelected) setSelectedContactId(storedSelected);
       setStoredKey(localStorage.getItem(ACCESS_KEY_KEY) ?? "");
+      if (!localStorage.getItem("sapocha_onboarded")) setShowOnboarding(true);
     } catch {
       // ignore corrupted storage
     }
   }, []);
+
+  const completeOnboarding = (onboardedProfile: Profile) => {
+    setSavedProfile(onboardedProfile);
+    setProfile(onboardedProfile);
+    try {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(onboardedProfile));
+      localStorage.setItem("sapocha_onboarded", "true");
+    } catch {}
+    setShowOnboarding(false);
+  };
+
+  const skipOnboarding = () => {
+    try { localStorage.setItem("sapocha_onboarded", "true"); } catch {}
+    setShowOnboarding(false);
+  };
 
   const saveProfile = () => {
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
@@ -344,6 +364,16 @@ export default function Home() {
       setError("クリップボードへのコピーに失敗しました");
     }
   };
+
+  if (showOnboarding) {
+    return (
+      <Onboarding
+        storedKey={storedKey}
+        onComplete={completeOnboarding}
+        onSkip={skipOnboarding}
+      />
+    );
+  }
 
   return (
     <div

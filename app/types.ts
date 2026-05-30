@@ -19,6 +19,8 @@ export type ProfileFormData = {
   strengths: string;
   idealPartner: string;
   app: string;
+  firstPerson?: string;
+  dialect?: string;
 };
 
 export type ProfileOutput = {
