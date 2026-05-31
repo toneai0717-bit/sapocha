@@ -123,7 +123,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
 
           {/* Pain points */}
           <div className="mb-3 text-left">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">こんな悩み、ありませんか？</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">マッチングアプリでこんな悩み、ありませんか？</p>
             <div className="space-y-2.5">
               {[
                 { icon: "😔", text: "いいねを送っても全然マッチングしない" },
