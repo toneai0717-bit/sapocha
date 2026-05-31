@@ -325,7 +325,7 @@ export default function Home() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-start justify-between">
-            <h1 className="text-4xl font-black tracking-tight text-slate-900">
+            <h1 className="text-4xl font-black text-slate-900">
               <Link href="/" className="select-none hover:opacity-90 transition-opacity">
                 サポ<span className="text-amber-500">チャ</span>
               </Link>
