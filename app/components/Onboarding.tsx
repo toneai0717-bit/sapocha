@@ -167,7 +167,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
               <span className="text-sm font-bold text-slate-500 shrink-0">ChatGPTとどう違うの？</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
-            <div className="bg-white/80 rounded-2xl border border-white shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="grid grid-cols-2 text-xs font-bold text-center border-b border-slate-100">
                 <div className="py-2.5 text-slate-400 border-r border-slate-100">汎用AIチャット</div>
                 <div className="py-2.5 text-amber-500">サポチャ</div>
