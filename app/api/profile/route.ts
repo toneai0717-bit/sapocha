@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join("\n");
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
+      model: "gemini-2.0-flash-lite",
       systemInstruction: SYSTEM_PROMPT,
     });
 
