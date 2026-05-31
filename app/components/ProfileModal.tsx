@@ -146,18 +146,23 @@ export default function ProfileModal({ profile, onFieldChange, onSave, onClose, 
           {/* 保存済みプロフィール文 */}
           {profile.profileText ? (
             <>
-              {generatedProfiles.length > 0 && (
-                <p className="text-xs font-semibold text-slate-500 mb-1.5">保存中のプロフィール文</p>
-              )}
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap flex-1">{profile.profileText}</p>
+              <div className="flex items-center justify-between mb-1.5">
+                {generatedProfiles.length > 0 && (
+                  <p className="text-xs font-semibold text-slate-500">保存中のプロフィール文</p>
+                )}
                 <button
                   onClick={copyProfileText}
-                  className="text-xs text-amber-600 hover:text-amber-700 font-medium px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors shrink-0"
+                  className="text-xs text-amber-600 hover:text-amber-700 font-medium px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors ml-auto"
                 >
                   {copied ? "✓ コピー済み" : "コピー"}
                 </button>
               </div>
+              <textarea
+                value={profile.profileText}
+                onChange={(e) => onFieldChange("profileText", e.target.value)}
+                rows={6}
+                className="w-full bg-white border border-amber-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 leading-relaxed resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
+              />
             </>
           ) : (
             generatedProfiles.length === 0 && !generating && (
