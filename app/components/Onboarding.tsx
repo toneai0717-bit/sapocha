@@ -137,14 +137,14 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
             </div>
           </div>
 
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-amber-200" />
             <span className="text-sm font-bold text-amber-500 shrink-0">サポチャで全部解決！</span>
             <div className="flex-1 h-px bg-amber-200" />
           </div>
 
           {/* Features */}
-          <div className="space-y-2.5 mb-10 text-left">
+          <div className="space-y-2.5 mb-6 text-left">
             {[
               { icon: "✨", text: "マッチ率が上がるプロフィール文を作れる" },
               { icon: "💬", text: "スクショを貼るだけで返信案を3つ提案" },
@@ -159,7 +159,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           </div>
 
           {/* vs 汎用AI */}
-          <div className="mb-10 text-left">
+          <div className="mb-8 text-left">
             <div className="flex items-center gap-3 mb-3">
               <div className="flex-1 h-px bg-slate-200" />
               <span className="text-sm font-bold text-slate-500 shrink-0">ChatGPTとどう違うの？</span>
