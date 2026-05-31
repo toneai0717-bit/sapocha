@@ -420,8 +420,31 @@ export default function Home() {
           />
         )}
 
+        {/* 相手未登録 → 追加を促す */}
+        {contacts.length === 0 && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-5 text-center">
+            <p className="text-2xl mb-2">👩</p>
+            <p className="text-sm font-bold text-slate-700 mb-1">まず気になる相手を登録しよう</p>
+            <p className="text-xs text-slate-400 mb-3">プロフィールを登録すると、ファーストメッセージから返信まで一貫してサポートできます</p>
+            <button
+              onClick={() => setShowAddContact(true)}
+              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-sm"
+            >
+              ＋ 相手を追加する
+            </button>
+          </div>
+        )}
+
+        {/* 相手登録済みだが未選択 → 選択を促す */}
+        {contacts.length > 0 && !selectedContactId && (
+          <div className="mb-4 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-center">
+            <p className="text-xs font-semibold text-slate-500 mb-1">👆 上から相手を選んでください</p>
+            <p className="text-xs text-slate-400">選択するとその子に合わせたサポートができます</p>
+          </div>
+        )}
+
         {/* Feature mode selector */}
-        <div className="flex gap-1.5 mb-3">
+        <div className={`flex gap-1.5 mb-3 transition-opacity ${!selectedContactId ? "opacity-40 pointer-events-none" : ""}`}>
           {MAIN_MODES.map(({ key, label, icon }) => (
             <button
               key={key}
@@ -438,7 +461,7 @@ export default function Home() {
         </div>
 
         {/* First message toggle */}
-        {featureMode === "reply" && (
+        {featureMode === "reply" && selectedContactId && (
           <button
             onClick={() => { setIsFirstMessage(!isFirstMessage); setResult(null); setError(null); clearImages(); }}
             className={`w-full mb-3 py-2.5 rounded-xl text-sm font-bold border transition-colors ${
@@ -478,7 +501,7 @@ export default function Home() {
         )}
 
         {/* Input mode toggle */}
-        {featureMode === "reply" && !isFirstMessage && (
+        {featureMode === "reply" && !isFirstMessage && selectedContactId && (
           <div className="flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
             {(["image", "text"] as const).map((m) => (
               <button
@@ -495,7 +518,7 @@ export default function Home() {
         )}
 
         {/* Tone selector */}
-        {featureMode === "reply" && !isFirstMessage && (
+        {featureMode === "reply" && !isFirstMessage && selectedContactId && (
           <div className="flex gap-2 mb-4">
             {(["自然", "盛り上げる", "積極的"] as const).map((t) => {
               const icons: Record<Tone, string> = { "自然": "💬", "盛り上げる": "🔥", "積極的": "💘" };
@@ -517,7 +540,7 @@ export default function Home() {
         )}
 
         {/* Date form */}
-        {featureMode === "date" && (
+        {featureMode === "date" && selectedContactId && (
           <div className="space-y-3 mb-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">📅 何回目のデート？</label>
@@ -592,7 +615,7 @@ export default function Home() {
         )}
 
         {/* Photo mode */}
-        {featureMode === "photo" && (
+        {featureMode === "photo" && selectedContactId && (
           <>
             <p className="text-xs text-slate-500 mb-3 bg-white border border-slate-200 rounded-xl px-3 py-2.5 shadow-sm">
               📷 プロフィール用の写真をアップロードしてください。1枚ずつ、または複数枚まとめて診断できます。
@@ -621,7 +644,7 @@ export default function Home() {
         )}
 
         {/* Reply image mode */}
-        {featureMode === "reply" && !isFirstMessage && mode === "image" && (
+        {featureMode === "reply" && !isFirstMessage && selectedContactId && mode === "image" && (
           <>
             <ImageDropzone
               previews={previews}
@@ -646,7 +669,7 @@ export default function Home() {
         )}
 
         {/* Reply text mode */}
-        {featureMode === "reply" && !isFirstMessage && mode === "text" && (
+        {featureMode === "reply" && !isFirstMessage && selectedContactId && mode === "text" && (
           <>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
               <p className="text-xs text-slate-400 mb-2">会話をそのままコピペしてください</p>
