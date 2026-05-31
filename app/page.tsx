@@ -353,7 +353,7 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <p className="mt-2 text-slate-700 text-sm font-medium leading-relaxed">
+          <p className="mt-0.5 text-slate-700 text-sm font-medium leading-relaxed">
             会うまでは、全部サポート。
           </p>
         </div>
