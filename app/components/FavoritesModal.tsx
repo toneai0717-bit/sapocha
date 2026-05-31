@@ -111,7 +111,7 @@ export default function FavoritesModal({ favorites, onRemove, onClose }: Favorit
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{favorites.length}</span>
             )}
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors text-xl leading-none">×</button>
+          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors text-xl leading-none rounded-full hover:bg-slate-100">×</button>
         </div>
 
         <div className="overflow-y-auto overscroll-contain p-4 space-y-3 flex-1">

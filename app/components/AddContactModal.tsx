@@ -107,7 +107,7 @@ export default function AddContactModal({ onAdd, onClose }: AddContactModalProps
                       <img src={p} alt={`スクショ${i + 1}`} className="w-16 h-16 object-cover rounded-lg border border-slate-200" />
                       <button
                         onClick={() => removePreview(i)}
-                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-slate-600 text-white text-xs flex items-center justify-center"
+                        className="absolute -top-3 -right-3 w-11 h-11 rounded-full bg-slate-600 text-white text-xs flex items-center justify-center hover:bg-red-500 transition-colors"
                       >
                         ×
                       </button>

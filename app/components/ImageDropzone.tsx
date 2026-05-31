@@ -58,7 +58,7 @@ export default function ImageDropzone({
               />
               <button
                 onClick={() => onRemove(i)}
-                className="absolute -top-2 -right-2 w-7 h-7 bg-slate-700 text-white rounded-full text-sm flex items-center justify-center hover:bg-red-500 transition-colors"
+                className="absolute -top-3 -right-3 w-11 h-11 bg-slate-700 text-white rounded-full text-sm flex items-center justify-center hover:bg-red-500 transition-colors"
                 aria-label="画像を削除"
               >
                 ×
