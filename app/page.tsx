@@ -27,8 +27,7 @@ import {
 
 const MAIN_MODES: { key: FeatureMode; label: string; icon: string }[] = [
   { key: "reply",  label: "返信サポート", icon: "💬" },
-  { key: "topics", label: "デートの話題", icon: "💡" },
-  { key: "date",   label: "デートコース", icon: "🗓" },
+  { key: "date",   label: "デートサポート", icon: "🗓" },
   { key: "photo",  label: "写真診断",     icon: "📷" },
 ];
 
@@ -258,7 +257,7 @@ export default function Home() {
         featureMode === "photo"
           ? { images, mode: featureMode }
           : featureMode === "date"
-          ? { profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber }
+          ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber }
           : featureMode === "topics"
           ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, history: historyContext, dateNumber }
           : mode === "image"
@@ -604,12 +603,39 @@ export default function Home() {
                 ))}
               </div>
             </div>
+            {/* 相手スクショ（任意） */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">📸 相手のスクショ（任意・話題の精度が上がります）</label>
+              {previews.length > 0 && (
+                <div className="flex gap-2 flex-wrap mb-2">
+                  {previews.map((p, i) => (
+                    <div key={i} className="relative">
+                      <Image src={p} alt={`スクリーンショット${i + 1}`} width={80} height={80} className="w-20 h-20 object-cover rounded-xl border border-slate-200" unoptimized />
+                      <button onClick={() => removePreview(i)} className="absolute -top-2 -right-2 w-7 h-7 bg-slate-700 text-white rounded-full text-sm flex items-center justify-center hover:bg-red-500 transition-colors" aria-label="画像を削除">×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div
+                className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm ${dragging ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-300 bg-white hover:bg-amber-50/30"} ${previews.length > 0 ? "p-3" : "p-5"}`}
+                onClick={() => inputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+              >
+                <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => Array.from(e.target.files ?? []).forEach((f) => handleFile(f))} />
+                <div className="text-center">
+                  <p className="text-slate-500 text-xs">{previews.length > 0 ? "＋ 追加する" : "タップしてスクショを選ぶ（プロフィール・会話どちらでもOK）"}</p>
+                </div>
+              </div>
+            </div>
+
             <button
               onClick={analyze}
               disabled={loading}
               className="w-full py-4 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
             >
-              {loading ? "提案中..." : result ? "再提案" : "デートコースを提案する"}
+              {loading ? "提案中..." : result ? "再提案" : "デートを提案する"}
             </button>
           </div>
         )}
@@ -903,6 +929,25 @@ export default function Home() {
                 <p className="text-sm text-slate-700 leading-relaxed">{topic.starter}</p>
               </div>
             ))}
+
+            {isDateResult(result) && result.topics && result.topics.length > 0 && (
+              <>
+                <div className="flex items-center gap-3 mt-2">
+                  <div className="flex-1 h-px bg-amber-200" />
+                  <span className="text-xs font-bold text-amber-500 shrink-0">💡 当日の話題</span>
+                  <div className="flex-1 h-px bg-amber-200" />
+                </div>
+                {result.topics.map((topic, i) => (
+                  <div key={i} className="rounded-xl border border-amber-200 p-4 shadow-sm bg-amber-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold text-amber-700">{topic.title}</span>
+                      <span className="text-xs text-amber-500 bg-amber-100 px-2 py-0.5 rounded-full">{topic.why}</span>
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed">{topic.starter}</p>
+                  </div>
+                ))}
+              </>
+            )}
 
             {isDateResult(result) && (
               <p className="text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">

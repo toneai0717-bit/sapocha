@@ -1,5 +1,6 @@
 export type InputMode = "image" | "text";
 export type FeatureMode = "reply" | "topics" | "date" | "profile" | "photo";
+// "topics" は内部互換のため残す。UIからは削除済み
 export type Tone = "自然" | "盛り上げる" | "積極的";
 
 export type Reply = { message: string; reason?: string };
@@ -8,7 +9,7 @@ export type DateSpot = { name: string; description: string; cost?: string };
 export type DateCourse = { theme: string; spots: DateSpot[]; point: string; totalCost?: string };
 export type ReplyResult = { situation: string; replies: Reply[] };
 export type TopicsResult = { situation: string; topics: Topic[] };
-export type DateResult = { situation: string; courses: DateCourse[] };
+export type DateResult = { situation: string; courses: DateCourse[]; topics?: Topic[] };
 export type ProfileFormData = {
   age: string;
   job: string;
