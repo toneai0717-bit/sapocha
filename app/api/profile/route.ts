@@ -2,7 +2,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+const genAI = new GoogleGenerativeAI(apiKey);
 
 const SYSTEM_PROMPT = `あなたは日本のマッチングアプリで実績のあるプロフィールライターです。
 マッチング率・返信率を最大化するプロフィール文を3パターン作成してください。
@@ -18,6 +20,12 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリで実績の
 4. 思わず笑えるか共感できる一文（読んでて「あ、この人面白い」と思わせる）
 5. 一緒にいる未来が想像できる描写（「一緒に〇〇行けたら楽しそう」）
 6. 犬・猫が好きな場合は必ず自然に盛り込む（女性ウケ最強ワード）
+
+◎ 文体の大原則（最重要）
+- プロフィール文は必ず「です・ます調」をベースにすること
+- 「話し方・口調」に関西弁やタメ口などが入力されていても、プロフィール本文には使わない
+- ただし個性を出すため、ポイントで自然な一言（「〜なんです」「〜ですよね笑」など）は可
+- 返信サポートや会話では口調を反映するが、プロフィール文は相手に好印象を与えることが最優先
 
 ◎ 絶対に避けること
 - 「誠実に向き合います」「真剣に考えています」→ 抽象的すぎて伝わらない

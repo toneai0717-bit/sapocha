@@ -2,7 +2,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+const genAI = new GoogleGenerativeAI(apiKey);
 
 const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコーチです。
 ユーザーの恋愛相談に、友達のように自然に答えてください。

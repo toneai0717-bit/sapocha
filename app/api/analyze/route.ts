@@ -2,7 +2,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) throw new Error("GEMINI_API_KEY is not configured");
+const genAI = new GoogleGenerativeAI(apiKey);
 
 const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 const MAX_BASE64_LENGTH = 5 * 1024 * 1024 * 1.4; // ~5MB after base64 overhead

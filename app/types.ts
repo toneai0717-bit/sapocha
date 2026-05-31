@@ -95,6 +95,31 @@ export const EMPTY_PROFILE: Profile = {
   app: "Omiai",
 };
 
+export type FavoriteReply = {
+  id: string;
+  type: "reply";
+  savedAt: number;
+  situation: string;
+  message: string;
+  reason?: string;
+  contactName?: string;
+};
+
+export type FavoriteDateCourse = {
+  id: string;
+  type: "date";
+  savedAt: number;
+  situation: string;
+  course: DateCourse;
+  contactName?: string;
+};
+
+export type Favorite = FavoriteReply | FavoriteDateCourse;
+
+export function isReplyResult(r: Result): r is ReplyResult {
+  return "replies" in r;
+}
+
 export function isTopicsResult(r: Result): r is TopicsResult {
   return "topics" in r && !("courses" in r);
 }

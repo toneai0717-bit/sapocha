@@ -12,6 +12,6 @@ export function checkRateLimit(ip: string): boolean {
     return true;
   }
   if (entry.count >= LIMIT) return false;
-  entry.count++;
+  store.set(ip, { ...entry, count: entry.count + 1 });
   return true;
 }
