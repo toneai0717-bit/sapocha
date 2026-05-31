@@ -70,7 +70,8 @@ function buildAnalyzeBody(params: {
     return { images, profile: profileStr, contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber };
   }
   if (featureMode === "reply" && isFirstMessage) {
-    return { profile: profileStr, contactProfile: firstMessageProfile, mode: "firstMessage" };
+    const resolvedContactProfile = firstMessageProfile || contactProfile;
+    return { profile: profileStr, contactProfile: resolvedContactProfile, mode: "firstMessage" };
   }
   const base = { profile: profileStr, contactProfile, tone, history: historyContext, mode: featureMode, area };
   if (mode === "image") return { ...base, images };
@@ -453,9 +454,14 @@ export default function Home() {
         {/* First message profile input */}
         {featureMode === "reply" && isFirstMessage && (
           <div className="mb-4">
-            <label className="block text-xs font-semibold text-slate-500 mb-1.5">相手のプロフィール情報（任意）</label>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+              相手のプロフィール情報（任意）
+              {getSelectedContact()?.profile && (
+                <span className="ml-2 text-amber-500 font-normal">← {getSelectedContact()?.name}のプロフィールを反映中</span>
+              )}
+            </label>
             <textarea
-              value={firstMessageProfile}
+              value={getSelectedContact()?.profile ? (firstMessageProfile || getSelectedContact()?.profile || "") : firstMessageProfile}
               onChange={(e) => setFirstMessageProfile(e.target.value)}
               placeholder={"例：\n趣味：カフェ巡り、映画鑑賞\n仕事：看護師\n休日：友達とよく出かける\n好きな食べ物：イタリアン"}
               rows={4}
