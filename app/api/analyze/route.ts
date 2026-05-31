@@ -221,8 +221,16 @@ export async function POST(req: NextRequest) {
       const safeDateDuration = typeof dateDuration === "string" ? dateDuration.slice(0, 10) : "半日";
       const safeDateInterests = typeof dateInterests === "string" ? dateInterests.slice(0, 200) : "";
       const safeDateBudget = typeof dateBudget === "string" ? dateBudget.slice(0, 20) : "";
+      const safeDateNumber = typeof dateNumber === "string" ? dateNumber.slice(0, 10) : "1回目";
       const profileSection = safeProfile ? `\n\n【自分のプロフィール】\n${safeProfile}` : "";
+      const dateNumberGuide =
+        safeDateNumber === "1回目"
+          ? "初デートなので緊張しすぎず会話が弾む場所を優先。重すぎず軽すぎないコースにする。"
+          : safeDateNumber === "2回目"
+          ? "2回目なので少し距離を縮める雰囲気のある場所。より二人の時間を楽しめるコースにする。"
+          : "3回目以降なので、思い出になるような特別感・非日常感のあるコースにする。";
       const condSection = [
+        `何回目のデート：${safeDateNumber}（${dateNumberGuide}）`,
         safeArea && `エリア：${safeArea}`,
         `時間帯：${safeDateTime}`,
         `デートの長さ：${safeDateDuration}`,

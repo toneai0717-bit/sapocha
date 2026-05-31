@@ -258,7 +258,7 @@ export default function Home() {
         featureMode === "photo"
           ? { images, mode: featureMode }
           : featureMode === "date"
-          ? { profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
+          ? { profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber }
           : featureMode === "topics"
           ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, history: historyContext, dateNumber }
           : mode === "image"
@@ -512,6 +512,24 @@ export default function Home() {
         {/* Date form */}
         {featureMode === "date" && (
           <div className="space-y-3 mb-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">📅 何回目のデート？</label>
+              <div className="flex gap-2">
+                {(["1回目", "2回目", "3回目以降"] as const).map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDateNumber(d)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                      dateNumber === d
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1.5">📍 エリア</label>
               <input
