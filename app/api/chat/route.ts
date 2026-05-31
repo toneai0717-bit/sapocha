@@ -1,8 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 
 const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコーチです。
 ユーザーの恋愛相談に、友達のように自然に答えてください。
@@ -55,14 +55,21 @@ export async function POST(req: NextRequest) {
       ? `${SYSTEM_PROMPT}\n\n【現在の状況・提案内容】\n${safeContext}`
       : SYSTEM_PROMPT;
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      system: [{ type: "text", text: systemWithContext, cache_control: { type: "ephemeral" } }],
-      messages: safeMessages,
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: systemWithContext,
     });
 
-    const text = response.content[0].type === "text" ? response.content[0].text : "";
+    const history = safeMessages.slice(0, -1).map((m) => ({
+      role: m.role === "user" ? "user" : "model",
+      parts: [{ text: m.content }],
+    }));
+
+    const lastMessage = safeMessages[safeMessages.length - 1];
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessage(lastMessage.content);
+    const text = result.response.text();
+
     return NextResponse.json({ message: text });
   } catch (error) {
     console.error("Chat API error:", error instanceof Error ? error.message : "unknown");

@@ -54,21 +54,6 @@ function mapToProfile(form: FormState, profileText: string): Profile {
   };
 }
 
-const DEV_TEST_DATA: FormState = {
-  name: "たいゆう",
-  firstPerson: "僕",
-  dialect: "関西弁だが、仲良くなるまでは丁寧語",
-  age: "32歳",
-  job: "自動車関連の商社",
-  area: "横浜",
-  hobbies: "・フットサル（職場の人と定期的に）\n・読書（本屋大賞の作品をよく読みます）\n・U-NEXTでプレミアリーグと映画（お風呂で入浴剤入れてスマホ防水して見るのがマイブーム）",
-  personality: "明るい、冗談多め",
-  weekends: "フットサル、山登り、公園散歩、お風呂で映画鑑賞",
-  strengths: "お風呂で映画を見る技術（入浴剤＋防水スマホで最高の環境を構築済み）",
-  idealPartner: "前向きな方、笑顔が多い方、好奇心旺盛な方",
-  pets: "犬も猫も大好きです",
-  app: "Omiai",
-};
 
 interface OnboardingProps {
   storedKey: string;
@@ -86,6 +71,20 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
   const [savedProfileText, setSavedProfileText] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testDataLoading, setTestDataLoading] = useState(false);
+
+  const fillTestData = async () => {
+    setTestDataLoading(true);
+    try {
+      const res = await fetch("/api/testdata");
+      const data = await res.json() as FormState;
+      if (data.name) setForm(data);
+    } catch {
+      // サイレントに失敗
+    } finally {
+      setTestDataLoading(false);
+    }
+  };
 
   const set = (key: keyof FormState, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -380,10 +379,11 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
             </button>
 
             <button
-              onClick={() => setForm(DEV_TEST_DATA)}
-              className="w-full py-2 text-xs text-slate-300 hover:text-slate-400 transition-colors"
+              onClick={fillTestData}
+              disabled={testDataLoading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-slate-400 transition-colors disabled:opacity-50"
             >
-              🧪 テストデータを入力
+              {testDataLoading ? "🧪 生成中..." : "🧪 AIでテストデータを生成"}
             </button>
           </div>
         </div>

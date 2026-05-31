@@ -1,8 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 
 const SYSTEM_PROMPT = `あなたは日本のマッチングアプリで実績のあるプロフィールライターです。
 マッチング率・返信率を最大化するプロフィール文を3パターン作成してください。
@@ -146,22 +146,24 @@ export async function POST(req: NextRequest) {
       `使用アプリ：${safeApp}`,
     ].filter(Boolean).join("\n");
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 3000,
-      system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-      messages: [{ role: "user", content: `以下の情報でプロフィール文を3パターン作成してください。\n\n${userMessage}` }],
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: SYSTEM_PROMPT,
     });
 
-    const responseText = response.content[0].type === "text" ? response.content[0].text : "";
+    const result = await model.generateContent(
+      `以下の情報でプロフィール文を3パターン作成してください。\n\n${userMessage}`
+    );
+
+    const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json({ error: "生成に失敗しました" }, { status: 500 });
     }
 
     try {
-      const result = JSON.parse(jsonMatch[0]);
-      return NextResponse.json(result);
+      const parsed = JSON.parse(jsonMatch[0]);
+      return NextResponse.json(parsed);
     } catch {
       return NextResponse.json({ error: "生成に失敗しました" }, { status: 500 });
     }

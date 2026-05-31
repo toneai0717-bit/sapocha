@@ -1,8 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
 
 const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 const MAX_BASE64_LENGTH = 5 * 1024 * 1024 * 1.4; // ~5MB after base64 overhead
@@ -153,7 +153,6 @@ const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコ
 }`;
 
 export async function POST(req: NextRequest) {
-  // Rate limiting
   const ip =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     req.headers.get("x-real-ip") ??
@@ -162,7 +161,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "リクエストが多すぎます。少し待ってから再試行してください。" }, { status: 429 });
   }
 
-  // Optional auth — set SAPOCHA_ACCESS_KEY in .env.local to enable
   const accessKey = process.env.SAPOCHA_ACCESS_KEY;
   if (accessKey) {
     const auth = req.headers.get("Authorization");
@@ -267,61 +265,60 @@ export async function POST(req: NextRequest) {
       userInstruction = "このスクリーンショットの会話を分析して、返信案を3つ提案してください。";
     }
 
-    const messageContent =
-      safeMode === "date" || (safeMode === "topics" && safeImages.length === 0)
-        ? [{ type: "text" as const, text: userInstruction }]
-        : safeImages.length > 0
-        ? [
-            ...safeImages.map((img) => ({
-              type: "image" as const,
-              source: {
-                type: "base64" as const,
-                media_type: img.mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
-                data: img.data as string,
-              },
-            })),
-            {
-              type: "text" as const,
-              text:
-                safeImages.length > 1
-                  ? `${userInstruction}（${safeImages.length}枚のスクショを順番に読んでください）`
-                  : userInstruction,
-            },
-          ]
-        : [
-            {
-              type: "text" as const,
-              text: `${userInstruction}\n\n【会話】\n${(text as string).trim().slice(0, 2000)}`,
-            },
-          ];
-
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2048,
-      system: [
-        {
-          type: "text",
-          text: systemPrompt,
-          cache_control: { type: "ephemeral" },
-        },
-      ],
-      messages: [{ role: "user", content: messageContent }],
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: systemPrompt,
     });
 
-    const responseText = response.content[0].type === "text" ? response.content[0].text : "";
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
+    const parts: Parameters<typeof model.generateContent>[0] extends { contents: infer C } ? C : never[] = [];
+
+    if (safeMode === "date" || (safeMode === "topics" && safeImages.length === 0)) {
+      const result = await model.generateContent(userInstruction);
+      const responseText = result.response.text();
+      return parseAndReturn(responseText);
     }
 
-    try {
-      const result = JSON.parse(jsonMatch[0]);
-      return NextResponse.json(result);
-    } catch {
-      return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
+    const contentParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
+
+    if (safeImages.length > 0) {
+      for (const img of safeImages) {
+        contentParts.push({
+          inlineData: {
+            mimeType: img.mediaType as string,
+            data: img.data as string,
+          },
+        });
+      }
     }
+
+    const instructionText =
+      safeImages.length > 1
+        ? `${userInstruction}（${safeImages.length}枚のスクショを順番に読んでください）`
+        : safeImages.length === 0
+        ? `${userInstruction}\n\n【会話】\n${(text as string).trim().slice(0, 2000)}`
+        : userInstruction;
+
+    contentParts.push({ text: instructionText });
+
+    const result = await model.generateContent({ contents: [{ role: "user", parts: contentParts }] });
+    const responseText = result.response.text();
+    return parseAndReturn(responseText);
+
   } catch (error) {
     console.error("API error:", error instanceof Error ? error.message : "unknown");
     return NextResponse.json({ error: "サーバーエラーが発生しました" }, { status: 500 });
+  }
+}
+
+function parseAndReturn(responseText: string): NextResponse {
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
+  }
+  try {
+    const result = JSON.parse(jsonMatch[0]);
+    return NextResponse.json(result);
+  } catch {
+    return NextResponse.json({ error: "解析に失敗しました" }, { status: 500 });
   }
 }
