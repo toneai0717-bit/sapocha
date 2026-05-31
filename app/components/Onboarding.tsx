@@ -191,7 +191,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           </div>
 
           <p className="text-base font-black mb-4">
-            <span className="text-slate-900">彼女が欲しいなら、</span><span className="text-amber-500">いま動こう。</span>
+            <span className="text-amber-800">彼女が欲しいなら、</span><span className="text-amber-500">いま動こう。</span>
           </p>
 
           <button
