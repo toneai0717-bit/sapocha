@@ -31,7 +31,7 @@ const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その
 
 type OnboardingStep = "welcome" | "form" | "result";
 
-type FormState = ProfileFormData & { name: string; firstPerson: string; dialect: string };
+type FormState = ProfileFormData & { name: string; firstPerson: string; dialect: string; pets: string };
 
 function mapToProfile(form: FormState, profileText: string): Profile {
   return {
@@ -46,7 +46,7 @@ function mapToProfile(form: FormState, profileText: string): Profile {
     weekends: form.weekends,
     strengths: form.strengths,
     idealPartner: form.idealPartner,
-    pets: "",
+    pets: form.pets,
     sampleReplies: "",
     freeText: "",
     profileText,
@@ -79,7 +79,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
   const [step, setStep] = useState<OnboardingStep>("welcome");
   const [form, setForm] = useState<FormState>({
     name: "", firstPerson: "", dialect: "", age: "", job: "", area: "",
-    hobbies: "", personality: "", weekends: "", strengths: "", idealPartner: "", app: "Pairs",
+    hobbies: "", personality: "", weekends: "", strengths: "", idealPartner: "", pets: "", app: "Pairs",
   });
   const [profiles, setProfiles] = useState<ProfileOutput[]>([]);
   const [savedProfileText, setSavedProfileText] = useState<string>("");
@@ -334,6 +334,18 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
                 value={form.idealPartner}
                 onChange={(e) => set("idealPartner", e.target.value)}
                 placeholder="例：一緒に笑える人、アクティブな人"
+                className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
+              />
+            </div>
+
+            {/* 犬猫 */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">🐾 犬・猫への好感度</label>
+              <input
+                type="text"
+                value={form.pets}
+                onChange={(e) => set("pets", e.target.value)}
+                placeholder="例：犬も猫も大好き / 実家で柴犬を飼ってた / 猫派です"
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
               />
             </div>
