@@ -190,15 +190,15 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
             </div>
           </div>
 
-          <p className="text-base font-black text-slate-800 mb-4">
-            彼女が欲しいなら、<span className="text-amber-500">いま動こう。</span>
+          <p className="text-base font-black mb-4">
+            <span className="text-slate-900">彼女が欲しいなら、</span><span className="text-amber-500">いま動こう。</span>
           </p>
 
           <button
             onClick={() => setStep("form")}
             className="w-full py-4 rounded-2xl font-bold text-base text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-lg mb-3"
           >
-            はじめる（約2分）
+            無料ではじめる（約2分）
           </button>
           <button
             onClick={onSkip}
