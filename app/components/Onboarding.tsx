@@ -151,7 +151,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
               { icon: "🎯", text: "あなたの話し方に合わせた自然な返信文" },
               { icon: "💡", text: "デートの話題・コースもまるごとサポート" },
             ].map(({ icon, text }) => (
-              <div key={text} className="flex items-center gap-3 bg-white/80 rounded-2xl px-4 py-3 shadow-sm border border-white">
+              <div key={text} className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 border border-slate-200 shadow-sm">
                 <span className="text-xl shrink-0" aria-hidden="true">{icon}</span>
                 <span className="text-sm text-slate-700 font-medium">{text}</span>
               </div>
