@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export const maxDuration = 30;
 
-const PROMPT = `マッチングアプリのテストユーザーを1人生成してください。毎回違うキャラクターにすること。
+const PROMPT = `マッチングアプリのテストユーザー（男性）を1人生成してください。毎回違うキャラクターにすること。
 
 必ず以下のJSON形式のみで返してください（説明不要）：
 {"name":"ひらがな名前","firstPerson":"俺か僕か私","dialect":"話し方の特徴","age":"XX歳","job":"職業","area":"エリア","hobbies":"趣味を箇条書きで（・項目｜エピソード形式で3つ）","personality":"性格2〜3語","weekends":"休日の過ごし方","strengths":"自慢エピソード1つ","idealPartner":"理想の相手1文","pets":"犬猫への一言","app":"Omiai/Pairs/with/タップル/Tinderのどれか"}`;
