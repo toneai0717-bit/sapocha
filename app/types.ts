@@ -47,6 +47,7 @@ export type Profile = {
   weekends: string;
   strengths: string;
   idealPartner: string;
+  pets: string;
   sampleReplies: string;
   freeText: string;
   profileText: string;
@@ -73,6 +74,7 @@ export const EMPTY_PROFILE: Profile = {
   weekends: "",
   strengths: "",
   idealPartner: "",
+  pets: "",
   sampleReplies: "",
   freeText: "",
   profileText: "",
@@ -108,6 +110,7 @@ export function formatProfileForPrompt(p: Profile): string {
   if (p.weekends) lines.push(`休日の過ごし方：${p.weekends}`);
   if (p.strengths) lines.push(`自慢・得意なこと：${p.strengths}`);
   if (p.idealPartner) lines.push(`理想の相手：${p.idealPartner}`);
+  if (p.pets) lines.push(`ペット：${p.pets}`);
   if (p.sampleReplies) lines.push(`【返信スタイルのサンプル（このトーン・文体・テンションを完全に真似すること）】\n${p.sampleReplies}`);
   if (p.freeText) lines.push(`その他：${p.freeText}`);
   return lines.join("\n");

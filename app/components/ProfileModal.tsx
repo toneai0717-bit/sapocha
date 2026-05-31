@@ -16,6 +16,7 @@ const FIELDS: { key: keyof Profile; label: string; placeholder: string; multilin
   { key: "weekends", label: "休日の過ごし方", placeholder: "山登り、カフェ巡り、家でまったり など" },
   { key: "strengths", label: "自慢・エピソード", placeholder: "料理が得意、旅行10カ国 など" },
   { key: "idealPartner", label: "理想の相手", placeholder: "一緒に笑える人、好奇心旺盛な人 など" },
+  { key: "pets", label: "🐾 ペット", placeholder: "犬（柴犬・3歳）、猫（2匹）など。いない場合は「なし」" },
   {
     key: "sampleReplies",
     label: "自分の返信サンプル（複数可）",

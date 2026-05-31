@@ -46,6 +46,7 @@ function mapToProfile(form: FormState, profileText: string): Profile {
     weekends: form.weekends,
     strengths: form.strengths,
     idealPartner: form.idealPartner,
+    pets: "",
     sampleReplies: "",
     freeText: "",
     profileText,
