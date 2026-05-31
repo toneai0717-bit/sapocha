@@ -266,16 +266,13 @@ export async function POST(req: NextRequest) {
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-1.5-flash",
       systemInstruction: systemPrompt,
     });
 
-    const parts: Parameters<typeof model.generateContent>[0] extends { contents: infer C } ? C : never[] = [];
-
     if (safeMode === "date" || (safeMode === "topics" && safeImages.length === 0)) {
       const result = await model.generateContent(userInstruction);
-      const responseText = result.response.text();
-      return parseAndReturn(responseText);
+      return parseAndReturn(result.response.text());
     }
 
     const contentParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
@@ -301,8 +298,7 @@ export async function POST(req: NextRequest) {
     contentParts.push({ text: instructionText });
 
     const result = await model.generateContent({ contents: [{ role: "user", parts: contentParts }] });
-    const responseText = result.response.text();
-    return parseAndReturn(responseText);
+    return parseAndReturn(result.response.text());
 
   } catch (error) {
     console.error("API error:", error instanceof Error ? error.message : "unknown");
