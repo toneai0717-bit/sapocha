@@ -115,7 +115,6 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 flex flex-col items-center px-6 py-10 overflow-y-auto">
         <div className="w-full max-w-sm text-center">
-          <LottieHero />
           <h1 className="text-5xl font-black tracking-tight text-slate-900 mb-2">
             サポ<span className="text-amber-500">チャ</span>
           </h1>
