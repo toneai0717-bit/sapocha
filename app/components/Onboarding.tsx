@@ -122,26 +122,26 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           <p className="text-slate-500 text-sm mb-10">会うまでは、全部サポート。その先は、君の番。</p>
 
           {/* Pain points */}
-          <div className="mb-3 text-left">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">マッチングアプリでこんな悩み、ありませんか？</p>
+          <div className="mb-4 text-left">
+            <p className="text-sm font-bold text-slate-500 mb-3 text-center">マッチングアプリでこんな悩み、ありませんか？</p>
             <div className="space-y-2.5">
               {[
                 { icon: "😔", text: "いいねを送っても全然マッチングしない" },
                 { icon: "💨", text: "せっかくマッチしても既読スルーされる" },
                 { icon: "🤔", text: "女性が喜ぶデートの仕方がわからない" },
               ].map(({ icon, text }) => (
-                <div key={text} className="flex items-center gap-3 bg-white/60 rounded-2xl px-4 py-3 border border-slate-100">
+                <div key={text} className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3.5 border border-slate-200 shadow-sm">
                   <span className="text-xl shrink-0" aria-hidden="true">{icon}</span>
-                  <span className="text-sm text-slate-600">{text}</span>
+                  <span className="text-sm font-medium text-slate-600">{text}</span>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="flex items-center gap-3 mb-8 px-2">
-            <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-xs font-bold text-amber-500 shrink-0">サポチャで全部解決</span>
-            <div className="flex-1 h-px bg-slate-200" />
+            <div className="flex-1 h-px bg-amber-200" />
+            <span className="text-sm font-bold text-amber-500 shrink-0">サポチャで全部解決！</span>
+            <div className="flex-1 h-px bg-amber-200" />
           </div>
 
           {/* Features */}
@@ -163,7 +163,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           <div className="mb-10 text-left">
             <div className="flex items-center gap-3 mb-3 px-2">
               <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs font-bold text-slate-400 shrink-0">ChatGPTとどう違うの？</span>
+              <span className="text-sm font-bold text-slate-500 shrink-0">ChatGPTとどう違うの？</span>
               <div className="flex-1 h-px bg-slate-200" />
             </div>
             <div className="bg-white/80 rounded-2xl border border-white shadow-sm overflow-hidden">
