@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const SYSTEM_PROMPT = `あなたは日本のマッチングアプリで実績のあるプロフィールライターです。
 マッチング率・返信率を最大化するプロフィール文を3パターン作成してください。
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     ].filter(Boolean).join("\n");
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-lite",
+      model: "gemini-1.5-flash",
       systemInstruction: SYSTEM_PROMPT,
     });
 

@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const ALLOWED_MEDIA_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 const MAX_BASE64_LENGTH = 5 * 1024 * 1024 * 1.4; // ~5MB after base64 overhead
@@ -266,7 +266,7 @@ export async function POST(req: NextRequest) {
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-lite",
+      model: "gemini-1.5-flash",
       systemInstruction: systemPrompt,
     });
 

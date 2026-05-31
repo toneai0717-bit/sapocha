@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "../../lib/rate-limit";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコーチです。
 ユーザーの恋愛相談に、友達のように自然に答えてください。
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       : SYSTEM_PROMPT;
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-lite",
+      model: "gemini-1.5-flash",
       systemInstruction: systemWithContext,
     });
 

@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const PROMPT = `マッチングアプリのテストユーザーをランダムに1人生成してください。
 毎回必ず異なるキャラクターにすること（職業・趣味・エリア・話し方など全部変える）。
@@ -25,7 +25,7 @@ const PROMPT = `マッチングアプリのテストユーザーをランダム�
 
 export async function GET() {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(PROMPT);
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
