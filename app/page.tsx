@@ -886,6 +886,12 @@ export default function Home() {
               </div>
             ))}
 
+            {isDateResult(result) && (
+              <p className="text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                ⚠️ 店名はAIが提案したものです。実際に行く前にGoogle マップで存在を確認してください。
+              </p>
+            )}
+
             {isDateResult(result) && result.courses.map((course, i) => (
               <div key={i} className="rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
                 <div className="flex items-center justify-between mb-3">
