@@ -113,7 +113,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
   // ── STEP: WELCOME ──────────────────────────────────────────────────
   if (step === "welcome") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 flex flex-col items-center justify-center px-6">
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 flex flex-col items-center px-6 py-10 overflow-y-auto">
         <div className="w-full max-w-sm text-center">
           <LottieHero />
           <h1 className="text-5xl font-black tracking-tight text-slate-900 mb-2">
@@ -121,12 +121,36 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           </h1>
           <p className="text-slate-500 text-sm mb-10">会うまでは、全部サポート。その先は、君の番。</p>
 
+          {/* Pain points */}
+          <div className="mb-3 text-left">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">こんな悩み、ありませんか？</p>
+            <div className="space-y-2.5">
+              {[
+                { icon: "😔", text: "いいねを送っても全然マッチングしない" },
+                { icon: "💨", text: "せっかくマッチしても既読スルーされる" },
+                { icon: "🤔", text: "女性が喜ぶデートの仕方がわからない" },
+              ].map(({ icon, text }) => (
+                <div key={text} className="flex items-center gap-3 bg-white/60 rounded-2xl px-4 py-3 border border-slate-100">
+                  <span className="text-xl shrink-0" aria-hidden="true">{icon}</span>
+                  <span className="text-sm text-slate-600">{text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 mb-8 px-2">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-xs font-bold text-amber-500 shrink-0">サポチャで全部解決</span>
+            <div className="flex-1 h-px bg-slate-200" />
+          </div>
+
+          {/* Features */}
           <div className="space-y-2.5 mb-10 text-left">
             {[
-              { icon: "✨", text: "マッチングアプリのプロフィール文を作れる" },
+              { icon: "✨", text: "マッチ率が上がるプロフィール文を作れる" },
               { icon: "💬", text: "スクショを貼るだけで返信案を3つ提案" },
-              { icon: "🎯", text: "あなたの話し方に合わせた返信文" },
-              { icon: "💡", text: "デートの話題・コースもサポート" },
+              { icon: "🎯", text: "あなたの話し方に合わせた自然な返信文" },
+              { icon: "💡", text: "デートの話題・コースもまるごとサポート" },
             ].map(({ icon, text }) => (
               <div key={text} className="flex items-center gap-3 bg-white/80 rounded-2xl px-4 py-3 shadow-sm border border-white">
                 <span className="text-xl shrink-0" aria-hidden="true">{icon}</span>
