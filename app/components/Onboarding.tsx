@@ -214,7 +214,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
                 type="text"
                 value={form.name}
                 onChange={(e) => set("name", e.target.value)}
-                placeholder="たいゆう、たい など"
+                placeholder="ゆうき、けん など"
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
               />
             </div>

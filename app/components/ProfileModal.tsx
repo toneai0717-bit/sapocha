@@ -5,7 +5,7 @@ import type { Profile, ProfileOutput } from "../types";
 const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
 
 const FIELDS: { key: keyof Profile; label: string; placeholder: string; multiline?: boolean }[] = [
-  { key: "name", label: "名前・ニックネーム", placeholder: "たいゆう、たい など" },
+  { key: "name", label: "名前・ニックネーム", placeholder: "ゆうき、けん など" },
   { key: "firstPerson", label: "一人称", placeholder: "俺 / 僕 / 私" },
   { key: "dialect", label: "話し方・口調", placeholder: "関西弁、フランク、丁寧 など" },
   { key: "age", label: "年齢", placeholder: "32歳" },
