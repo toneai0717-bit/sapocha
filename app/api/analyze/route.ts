@@ -124,6 +124,40 @@ const PHOTO_PROMPT = `あなたはマッチングアプリの写真コーチで�
   ]
 }`;
 
+const FIRST_MESSAGE_PROMPT = `あなたは日本のマッチングアプリのプロコーチです。
+マッチング直後のファーストメッセージを3パターン提案してください。
+
+【ファーストメッセージの鉄則】
+- 「はじめまして！よろしくお願いします！」だけはNG。返信を相手に丸投げになる。
+- いきなりタメ口・呼び捨てはNG。「チャラそう」と思われて一発アウト。
+- 長文すぎる日記もNG。最初から熱量が重すぎると引かれる。
+- 「なぜいいねしたのか」を必ず入れる（プロフィールをちゃんと読んだことが伝わる）
+- 相手が返しやすい質問を1つだけ入れる
+- 敬語ベースで、でも堅すぎない自然なトーン
+
+【良い構成】
+「共感・気づき（プロフィールのここが刺さった）＋自分のエピソード少し＋返しやすい質問」
+
+【良い例】
+例1（共通の趣味）：「〇〇さん、はじめまして！プロフィール読んで、カフェ巡りが好きって書いてあって嬉しくなりました笑 僕も休日よくカフェ開拓してるんですよね。最近お気に入りのお店とかありますか？😊」
+例2（食・写真から）：「はじめまして！写真のパスタ、めちゃくちゃ美味しそうで思わずいいねしました笑 僕も食べ歩き好きなんですが、これってどこのお店ですか？ぜひ教えてほしいです！」
+例3（誠実さ重視）：「はじめまして！〇〇さんのプロフィール読んで、休日の過ごし方の価値観が近そうだなと思っていいねしました。まずは色々お話しできたら嬉しいです、よろしくお願いします！ちなみに最近の週末はどんな感じで過ごされてますか？」
+
+3つは必ず異なる切り口で作ること：
+- 案1：共通の趣味・好きなものから入る
+- 案2：写真や具体的なプロフィールの一言に反応する
+- 案3：相手の雰囲気・価値観への共感から入る
+
+必ず以下のJSON形式のみで返してください（説明文不要）：
+{
+  "situation": "相手のプロフィールから読み取った印象を1〜2文で",
+  "replies": [
+    { "message": "ファーストメッセージ本文", "reason": "特徴を10文字以内で" },
+    { "message": "ファーストメッセージ本文", "reason": "特徴を10文字以内で" },
+    { "message": "ファーストメッセージ本文", "reason": "特徴を10文字以内で" }
+  ]
+}`;
+
 const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコーチです。
 会話のスクリーンショットを見て、相手が「返信したくなる」自然なメッセージを3つ提案してください。
 
@@ -178,7 +212,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as Record<string, unknown>;
     const { images, profile, contactProfile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber } = body;
 
-    const safeMode = ["reply", "topics", "date", "photo"].includes(mode as string) ? (mode as string) : "reply";
+    const safeMode = ["reply", "firstMessage", "topics", "date", "photo"].includes(mode as string) ? (mode as string) : "reply";
 
     const safeImages = Array.isArray(images)
       ? images
@@ -199,7 +233,7 @@ export async function POST(req: NextRequest) {
     const safeHistory = typeof history === "string" ? history.trim().slice(0, 3000) : "";
 
     const noInput = safeImages.length === 0 && !text;
-    const inputRequired = safeMode !== "date" && !(safeMode === "topics" && safeHistory) && safeMode !== "photo" || (safeMode === "photo" && safeImages.length === 0);
+    const inputRequired = safeMode !== "date" && safeMode !== "firstMessage" && !(safeMode === "topics" && safeHistory) && safeMode !== "photo" || (safeMode === "photo" && safeImages.length === 0);
     if (noInput && inputRequired) {
       return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
     }
@@ -210,7 +244,18 @@ export async function POST(req: NextRequest) {
     let systemPrompt: string;
     let userInstruction: string;
 
-    if (safeMode === "photo") {
+    if (safeMode === "firstMessage") {
+      const profileSection = safeProfile
+        ? `\n\n【自分のプロフィール】\n${safeProfile}\nファーストメッセージはこの人物の性格・話し方に合わせてください。`
+        : "";
+      systemPrompt = FIRST_MESSAGE_PROMPT + profileSection + contactProfileSection;
+      userInstruction = safeContactProfile
+        ? "上記の相手のプロフィールをもとに、ファーストメッセージを3パターン提案してください。"
+        : "ファーストメッセージを3パターン提案してください。";
+      const model2 = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction: systemPrompt });
+      const result2 = await model2.generateContent(userInstruction);
+      return parseAndReturn(result2.response.text());
+    } else if (safeMode === "photo") {
       systemPrompt = PHOTO_PROMPT;
       userInstruction =
         safeImages.length > 1

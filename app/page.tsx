@@ -56,8 +56,10 @@ function buildAnalyzeBody(params: {
   dateInterests: string;
   dateBudget: string;
   dateNumber: string;
+  isFirstMessage: boolean;
+  firstMessageProfile: string;
 }) {
-  const { featureMode, mode, previews, mediaTypes, conversationText, profileStr, contactProfile, tone, historyContext, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber } = params;
+  const { featureMode, mode, previews, mediaTypes, conversationText, profileStr, contactProfile, tone, historyContext, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber, isFirstMessage, firstMessageProfile } = params;
   const images = previews.map((p, i) => ({
     data: p.split(",")[1],
     mediaType: mediaTypes[i] ?? "image/jpeg",
@@ -66,6 +68,9 @@ function buildAnalyzeBody(params: {
   if (featureMode === "photo") return { images, mode: featureMode };
   if (featureMode === "date") {
     return { images, profile: profileStr, contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber };
+  }
+  if (featureMode === "reply" && isFirstMessage) {
+    return { profile: profileStr, contactProfile: firstMessageProfile, mode: "firstMessage" };
   }
   const base = { profile: profileStr, contactProfile, tone, history: historyContext, mode: featureMode, area };
   if (mode === "image") return { ...base, images };
@@ -85,6 +90,8 @@ export default function Home() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [mediaTypes, setMediaTypes] = useState<string[]>([]);
   const [conversationText, setConversationText] = useState("");
+  const [isFirstMessage, setIsFirstMessage] = useState(false);
+  const [firstMessageProfile, setFirstMessageProfile] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -203,6 +210,8 @@ export default function Home() {
   const analyze = async () => {
     if (featureMode === "photo") {
       if (previews.length === 0) return;
+    } else if (featureMode === "reply" && isFirstMessage) {
+      // ファーストメッセージは入力不要（相手プロフィールは任意）
     } else if (featureMode !== "date") {
       if (mode === "image" && previews.length === 0) return;
       if (mode === "text" && conversationText.trim().length < 5) return;
@@ -229,6 +238,8 @@ export default function Home() {
         dateInterests,
         dateBudget,
         dateNumber,
+        isFirstMessage,
+        firstMessageProfile,
       });
 
       const res = await fetch("/api/analyze", {
@@ -413,7 +424,7 @@ export default function Home() {
           {MAIN_MODES.map(({ key, label, icon }) => (
             <button
               key={key}
-              onClick={() => { setFeatureMode(key); setResult(null); setError(null); clearImages(); }}
+              onClick={() => { setFeatureMode(key); setResult(null); setError(null); clearImages(); setIsFirstMessage(false); }}
               className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                 featureMode === key
                   ? "bg-amber-500 text-white border-amber-500 shadow-sm"
@@ -425,8 +436,43 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Input mode toggle */}
+        {/* First message toggle */}
         {featureMode === "reply" && (
+          <button
+            onClick={() => { setIsFirstMessage(!isFirstMessage); setResult(null); setError(null); clearImages(); }}
+            className={`w-full mb-3 py-2.5 rounded-xl text-sm font-bold border transition-colors ${
+              isFirstMessage
+                ? "bg-amber-500 text-white border-amber-500 shadow-sm"
+                : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
+            }`}
+          >
+            💌 ファーストメッセージを作る {isFirstMessage ? "ON" : "OFF"}
+          </button>
+        )}
+
+        {/* First message profile input */}
+        {featureMode === "reply" && isFirstMessage && (
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">相手のプロフィール情報（任意）</label>
+            <textarea
+              value={firstMessageProfile}
+              onChange={(e) => setFirstMessageProfile(e.target.value)}
+              placeholder={"例：\n趣味：カフェ巡り、映画鑑賞\n仕事：看護師\n休日：友達とよく出かける\n好きな食べ物：イタリアン"}
+              rows={4}
+              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-300 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm"
+            />
+            <button
+              onClick={analyze}
+              disabled={loading}
+              className="w-full mt-3 py-4 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm"
+            >
+              {loading ? "生成中..." : result ? "再生成" : "ファーストメッセージを生成する"}
+            </button>
+          </div>
+        )}
+
+        {/* Input mode toggle */}
+        {featureMode === "reply" && !isFirstMessage && (
           <div className="flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm">
             {(["image", "text"] as const).map((m) => (
               <button
@@ -443,7 +489,7 @@ export default function Home() {
         )}
 
         {/* Tone selector */}
-        {featureMode === "reply" && (
+        {featureMode === "reply" && !isFirstMessage && (
           <div className="flex gap-2 mb-4">
             {(["自然", "盛り上げる", "積極的"] as const).map((t) => {
               const icons: Record<Tone, string> = { "自然": "💬", "盛り上げる": "🔥", "積極的": "💘" };
@@ -569,7 +615,7 @@ export default function Home() {
         )}
 
         {/* Reply image mode */}
-        {featureMode === "reply" && mode === "image" && (
+        {featureMode === "reply" && !isFirstMessage && mode === "image" && (
           <>
             <ImageDropzone
               previews={previews}
@@ -594,7 +640,7 @@ export default function Home() {
         )}
 
         {/* Reply text mode */}
-        {featureMode === "reply" && mode === "text" && (
+        {featureMode === "reply" && !isFirstMessage && mode === "text" && (
           <>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
               <p className="text-xs text-slate-400 mb-2">会話をそのままコピペしてください</p>
