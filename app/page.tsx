@@ -325,11 +325,16 @@ export default function Home() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-start justify-between">
-            <h1 className="text-4xl font-black text-slate-900">
-              <Link href="/" className="select-none hover:opacity-90 transition-opacity">
-                サポ<span className="text-amber-500">チャ</span>
-              </Link>
-            </h1>
+            <div>
+              <h1 className="text-4xl font-black text-slate-900">
+                <Link href="/" className="select-none hover:opacity-90 transition-opacity">
+                  サポ<span className="text-amber-500">チャ</span>
+                </Link>
+              </h1>
+              <p className="mt-0.5 text-slate-700 text-sm font-medium leading-relaxed">
+                会うまでは、全部サポート。
+              </p>
+            </div>
             <div className="flex flex-col items-end gap-1.5 mt-1">
               <button
                 onClick={() => { resetProfileDraft(); setShowProfile(true); }}
@@ -353,9 +358,6 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <p className="mt-0.5 text-slate-700 text-sm font-medium leading-relaxed">
-            会うまでは、全部サポート。
-          </p>
         </div>
 
         <ContactSelector
