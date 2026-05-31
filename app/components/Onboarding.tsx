@@ -159,6 +159,38 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
             ))}
           </div>
 
+          {/* vs 汎用AI */}
+          <div className="mb-10 text-left">
+            <div className="flex items-center gap-3 mb-3 px-2">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-xs font-bold text-slate-400 shrink-0">ChatGPTとどう違うの？</span>
+              <div className="flex-1 h-px bg-slate-200" />
+            </div>
+            <div className="bg-white/80 rounded-2xl border border-white shadow-sm overflow-hidden">
+              <div className="grid grid-cols-2 text-xs font-bold text-center border-b border-slate-100">
+                <div className="py-2.5 text-slate-400 border-r border-slate-100">汎用AIチャット</div>
+                <div className="py-2.5 text-amber-500">サポチャ</div>
+              </div>
+              {[
+                ["状況をゼロから説明", "スクショを貼るだけ"],
+                ["誰にでも同じ返信文", "あなたの話し方で提案"],
+                ["相手のことを毎回説明", "相手の情報を記憶"],
+                ["恋愛以外も対応", "マッチングアプリに特化"],
+              ].map(([bad, good]) => (
+                <div key={bad} className="grid grid-cols-2 text-xs border-b border-slate-50 last:border-0">
+                  <div className="flex items-center gap-1.5 px-3 py-3 border-r border-slate-100 text-slate-400">
+                    <span className="text-red-400 shrink-0">✕</span>
+                    {bad}
+                  </div>
+                  <div className="flex items-center gap-1.5 px-3 py-3 text-slate-700 font-medium">
+                    <span className="text-amber-500 shrink-0">◎</span>
+                    {good}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <button
             onClick={() => setStep("form")}
             className="w-full py-4 rounded-2xl font-bold text-base text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-lg mb-3"
