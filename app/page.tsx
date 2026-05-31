@@ -330,7 +330,15 @@ export default function Home() {
                 サポ<span className="text-amber-500">チャ</span>
               </Link>
             </h1>
-            <div className="flex items-center gap-2 mt-1.5">
+            <div className="flex flex-col items-end gap-1.5 mt-1">
+              <button
+                onClick={() => { resetProfileDraft(); setShowProfile(true); }}
+                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
+              >
+                <span aria-hidden="true">⚙</span>
+                <span>プロフィール設定</span>
+                {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" aria-hidden="true" />}
+              </button>
               <button
                 onClick={() => setShowFavorites(true)}
                 className="relative flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-500 transition-colors bg-white hover:bg-rose-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
@@ -342,14 +350,6 @@ export default function Home() {
                     {favorites.length > 99 ? "99" : favorites.length}
                   </span>
                 )}
-              </button>
-              <button
-                onClick={() => { resetProfileDraft(); setShowProfile(true); }}
-                className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
-              >
-                <span aria-hidden="true">⚙</span>
-                <span>プロフィール設定</span>
-                {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" aria-hidden="true" />}
               </button>
             </div>
           </div>

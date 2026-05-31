@@ -66,7 +66,7 @@ export default function ChatPanel({ messages, loading, onSend }: ChatPanelProps)
             }
           }}
           placeholder="「もっとカジュアルに」「この状況どうしたら？」など..."
-          rows={1}
+          rows={3}
           className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 resize-none focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100"
         />
         <button
