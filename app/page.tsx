@@ -20,6 +20,7 @@ import {
   isTopicsResult,
   isDateResult,
   isProfileResult,
+  isPhotoResult,
   hasProfile,
   formatProfileForPrompt,
 } from "./types";
@@ -28,6 +29,7 @@ const MAIN_MODES: { key: FeatureMode; label: string; icon: string }[] = [
   { key: "reply",  label: "返信サポート", icon: "💬" },
   { key: "topics", label: "デートの話題", icon: "💡" },
   { key: "date",   label: "デートコース", icon: "🗓" },
+  { key: "photo",  label: "写真診断",     icon: "📷" },
 ];
 
 const PROFILE_KEY = "sapocha_profile_v2";
@@ -76,7 +78,7 @@ export default function Home() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (result && !isTopicsResult(result) && !isDateResult(result) && !isProfileResult(result)) {
+    if (result && !isTopicsResult(result) && !isDateResult(result) && !isProfileResult(result) && !isPhotoResult(result)) {
       setEditedReplies(result.replies.map((r) => r.message));
     }
     if (!result) setChatMessages([]);
@@ -233,7 +235,9 @@ export default function Home() {
   );
 
   const analyze = async () => {
-    if (featureMode === "topics") {
+    if (featureMode === "photo") {
+      if (previews.length === 0) return;
+    } else if (featureMode === "topics") {
       const hasHistory = contacts.find((c) => c.id === selectedContactId)?.situationHistory.length ?? 0;
       if (previews.length === 0 && hasHistory === 0 && conversationText.trim().length < 5) return;
     } else if (featureMode !== "date") {
@@ -251,7 +255,9 @@ export default function Home() {
       }));
       const contactProfile = contacts.find((c) => c.id === selectedContactId)?.profile ?? "";
       const body =
-        featureMode === "date"
+        featureMode === "photo"
+          ? { images, mode: featureMode }
+          : featureMode === "date"
           ? { profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, area, dateTime, dateDuration, dateInterests, dateBudget }
           : featureMode === "topics"
           ? { images, profile: formatProfileForPrompt(savedProfile), contactProfile, mode: featureMode, history: historyContext, dateNumber }
@@ -293,6 +299,9 @@ export default function Home() {
   };
 
   const buildResultContext = (r: Result): string => {
+    if (isPhotoResult(r)) {
+      return `【写真診断結果】\n${r.overall}\n${r.photos.map((p, i) => `写真${i + 1}：${p.verdict}（${p.score}点）`).join("\n")}`;
+    }
     if (isProfileResult(r)) {
       return r.profiles.map((p) => `【${p.type}】\n${p.text}`).join("\n\n");
     }
@@ -464,7 +473,7 @@ export default function Home() {
         </div>
 
         {/* Input mode toggle */}
-        <div className={`flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm ${featureMode === "date" ? "hidden" : ""}`}>
+        <div className={`flex gap-2 mb-3 bg-white rounded-2xl p-1 border border-slate-200 shadow-sm ${featureMode === "date" || featureMode === "photo" ? "hidden" : ""}`}>
           {(["image", "text"] as const).map((m) => (
             <button
               key={m}
@@ -587,8 +596,49 @@ export default function Home() {
           </div>
         )}
 
+        {/* Photo diagnosis mode */}
+        {featureMode === "photo" && (
+          <>
+            <p className="text-xs text-slate-500 mb-3 bg-white border border-slate-200 rounded-xl px-3 py-2.5 shadow-sm">
+              📷 プロフィール用の写真をアップロードしてください。1枚ずつ、または複数枚まとめて診断できます。
+            </p>
+            {previews.length > 0 && (
+              <div className="flex gap-2 flex-wrap mb-2">
+                {previews.map((p, i) => (
+                  <div key={i} className="relative">
+                    <Image src={p} alt={`写真${i + 1}`} width={80} height={80} className="w-20 h-20 object-cover rounded-xl border border-slate-200" unoptimized />
+                    <button onClick={() => removePreview(i)} className="absolute -top-2 -right-2 w-7 h-7 bg-slate-700 text-white rounded-full text-sm flex items-center justify-center hover:bg-red-500 transition-colors" aria-label="画像を削除">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div
+              className={`relative rounded-2xl border-2 border-dashed transition-all cursor-pointer shadow-sm ${dragging ? "border-amber-400 bg-amber-50" : "border-slate-200 hover:border-amber-300 bg-white hover:bg-amber-50/30"} ${previews.length > 0 ? "p-4" : "p-10"}`}
+              onClick={() => inputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={handleDrop}
+            >
+              <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => Array.from(e.target.files ?? []).forEach((f) => handleFile(f))} />
+              <div className="text-center">
+                <div className={`rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-2 ${previews.length > 0 ? "w-10 h-10 text-xl" : "w-16 h-16 text-3xl"}`} aria-hidden="true">📷</div>
+                <p className="text-slate-600 text-sm font-medium">{previews.length > 0 ? "＋ 追加する" : "タップして写真を選ぶ"}</p>
+                {previews.length === 0 && <p className="text-slate-400 text-xs mt-1 hidden sm:block">複数枚・ドラッグ&amp;ドロップでも可</p>}
+              </div>
+            </div>
+            {previews.length > 0 && (
+              <div className="mt-3 flex gap-2">
+                <button onClick={() => { setPreviews([]); setMediaTypes([]); setResult(null); setError(null); }} className="px-4 py-4 rounded-xl text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:border-slate-300 bg-white transition-colors shadow-sm">クリア</button>
+                <button onClick={analyze} disabled={loading} className="flex-1 py-4 rounded-xl font-semibold text-sm text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 transition-colors shadow-sm">
+                  {loading ? "診断中..." : result ? "再診断" : "写真を診断する"}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
         {/* Image mode */}
-        {featureMode !== "date" && mode === "image" && (
+        {featureMode !== "date" && featureMode !== "photo" && mode === "image" && (
           <>
             {featureMode === "topics" && (
               <div className="mb-3 space-y-2">
@@ -701,7 +751,7 @@ export default function Home() {
         )}
 
         {/* Text mode */}
-        {featureMode !== "date" && mode === "text" && (
+        {featureMode !== "date" && featureMode !== "photo" && mode === "text" && (
           <>
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
               <p className="text-xs text-slate-400 mb-2">
@@ -749,7 +799,52 @@ export default function Home() {
         )}
 
         {/* Results */}
-        {result && !isProfileResult(result) && (
+        {result && isPhotoResult(result) && (
+          <div className="mt-5 space-y-3">
+            <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
+              <p className="text-xs text-slate-500 leading-relaxed">{result.overall}</p>
+            </div>
+            {result.photos.map((photo, i) => {
+              const verdictStyle =
+                photo.verdict === "1枚目向き" ? "bg-green-100 text-green-700 border-green-200" :
+                photo.verdict === "サブ向き"  ? "bg-amber-100 text-amber-700 border-amber-200" :
+                                                "bg-red-100 text-red-700 border-red-200";
+              const scoreColor =
+                photo.score >= 80 ? "text-green-600" :
+                photo.score >= 60 ? "text-amber-600" : "text-red-500";
+              return (
+                <div key={i} className="rounded-xl border border-slate-200 p-4 shadow-sm bg-white">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      {previews[i] && (
+                        <Image src={previews[i]} alt={`写真${i + 1}`} width={40} height={40} className="w-10 h-10 object-cover rounded-lg border border-slate-200" unoptimized />
+                      )}
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${verdictStyle}`}>{photo.verdict}</span>
+                    </div>
+                    <span className={`text-xl font-black ${scoreColor}`}>{photo.score}<span className="text-xs font-normal text-slate-400">点</span></span>
+                  </div>
+                  {photo.goods.length > 0 && (
+                    <div className="mb-2">
+                      {photo.goods.map((g, j) => (
+                        <p key={j} className="text-xs text-slate-600 flex items-start gap-1.5 mb-0.5"><span className="text-green-500 shrink-0">◎</span>{g}</p>
+                      ))}
+                    </div>
+                  )}
+                  {photo.bads.length > 0 && (
+                    <div className="mb-2">
+                      {photo.bads.map((b, j) => (
+                        <p key={j} className="text-xs text-slate-500 flex items-start gap-1.5 mb-0.5"><span className="text-red-400 shrink-0">✕</span>{b}</p>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">💡 {photo.advice}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {result && !isProfileResult(result) && !isPhotoResult(result) && (
           <div className="mt-5 space-y-3">
             <div className="bg-white rounded-xl p-3 border border-slate-100 shadow-sm">
               <p className="text-xs text-slate-500 leading-relaxed">{result.situation ?? ""}</p>
@@ -822,7 +917,7 @@ export default function Home() {
           </div>
         )}
 
-        {result && !isProfileResult(result) && (
+        {result && !isProfileResult(result) && !isPhotoResult(result) && (
           <ChatPanel
             messages={chatMessages}
             loading={chatLoading}

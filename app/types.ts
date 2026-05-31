@@ -1,5 +1,5 @@
 export type InputMode = "image" | "text";
-export type FeatureMode = "reply" | "topics" | "date" | "profile";
+export type FeatureMode = "reply" | "topics" | "date" | "profile" | "photo";
 export type Tone = "自然" | "盛り上げる" | "積極的";
 
 export type Reply = { message: string; reason?: string };
@@ -33,7 +33,20 @@ export type ProfileResult = {
   profiles: ProfileOutput[];
 };
 
-export type Result = ReplyResult | TopicsResult | DateResult | ProfileResult;
+export type PhotoEval = {
+  verdict: "1枚目向き" | "サブ向き" | "やめとけ";
+  score: number;
+  goods: string[];
+  bads: string[];
+  advice: string;
+};
+
+export type PhotoResult = {
+  overall: string;
+  photos: PhotoEval[];
+};
+
+export type Result = ReplyResult | TopicsResult | DateResult | ProfileResult | PhotoResult;
 
 export type Profile = {
   name: string;
@@ -91,6 +104,10 @@ export function isDateResult(r: Result): r is DateResult {
 
 export function isProfileResult(r: Result): r is ProfileResult {
   return "profiles" in r;
+}
+
+export function isPhotoResult(r: Result): r is PhotoResult {
+  return "photos" in r;
 }
 
 export function hasProfile(p: Profile): boolean {

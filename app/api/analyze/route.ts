@@ -78,6 +78,38 @@ const DATE_PROMPT = `あなたはマッチングアプリのデートプラン�
   ]
 }`;
 
+const PHOTO_PROMPT = `あなたはマッチングアプリの写真コーチです。
+アップロードされたプロフィール写真を診断し、以下の観点で正直に評価してください。
+
+【評価観点】
+- 清潔感（髪・服・肌の印象）
+- 表情（笑顔・親しみやすさ・目力）
+- 背景・構図（整理されているか・映える環境か）
+- 1枚目向きかどうか（第一印象・インパクト）
+- 日常感・親しみやすさ（自然体かどうか）
+
+【判定基準】
+- 1枚目向き：第一印象が良く、プロフィールのメイン写真として最適
+- サブ向き：趣味・日常感を伝えるのに適しているが1枚目には向かない
+- やめとけ：使わない方がいい（明確な理由あり）
+
+複数枚ある場合は各写真を個別に評価してください。
+スコアは100点満点で、女性目線での好感度として正直につけること。
+
+必ず以下のJSON形式のみで返してください：
+{
+  "overall": "全体的なアドバイスを1〜2文で",
+  "photos": [
+    {
+      "verdict": "1枚目向き",
+      "score": 85,
+      "goods": ["清潔感がある", "笑顔が自然"],
+      "bads": ["背景が少し暗い"],
+      "advice": "光の当たる場所で撮ればさらに良くなります"
+    }
+  ]
+}`;
+
 const SYSTEM_PROMPT = `あなたは日本のマッチングアプリのプロコーチです。
 会話のスクリーンショットを見て、相手が「返信したくなる」自然なメッセージを3つ提案してください。
 
@@ -131,7 +163,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as Record<string, unknown>;
     const { images, profile, contactProfile, text, tone, history, mode, area, dateTime, dateDuration, dateInterests, dateBudget, dateNumber } = body;
 
-    const safeMode = ["reply", "topics", "date"].includes(mode as string) ? (mode as string) : "reply";
+    const safeMode = ["reply", "topics", "date", "photo"].includes(mode as string) ? (mode as string) : "reply";
 
     const safeImages = Array.isArray(images)
       ? images
@@ -152,7 +184,7 @@ export async function POST(req: NextRequest) {
     const safeHistory = typeof history === "string" ? history.trim().slice(0, 3000) : "";
 
     const noInput = safeImages.length === 0 && !text;
-    const inputRequired = safeMode !== "date" && !(safeMode === "topics" && safeHistory);
+    const inputRequired = safeMode !== "date" && !(safeMode === "topics" && safeHistory) && safeMode !== "photo" || (safeMode === "photo" && safeImages.length === 0);
     if (noInput && inputRequired) {
       return NextResponse.json({ error: "画像またはテキストがありません" }, { status: 400 });
     }
@@ -163,7 +195,13 @@ export async function POST(req: NextRequest) {
     let systemPrompt: string;
     let userInstruction: string;
 
-    if (safeMode === "topics") {
+    if (safeMode === "photo") {
+      systemPrompt = PHOTO_PROMPT;
+      userInstruction =
+        safeImages.length > 1
+          ? `${safeImages.length}枚の写真を1枚ずつ診断してください。`
+          : "この写真を診断してください。";
+    } else if (safeMode === "topics") {
       const safeDateNumber = typeof dateNumber === "string" ? dateNumber.slice(0, 10) : "1回目";
       const profileSection = safeProfile ? `\n\n【自分のプロフィール】\n${safeProfile}` : "";
       const historySection = safeHistory ? `\n\n【これまでの会話履歴】\n${safeHistory}` : "";
