@@ -25,7 +25,7 @@ export default function ContactSelector({
           <div key={c.id} className="relative group flex items-center">
             <button
               onClick={() => onSelect(c.id)}
-              className={`pl-3 pr-9 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+              className={`pl-3 pr-9 py-2.5 rounded-full text-xs font-semibold border transition-colors ${
                 selectedContactId === c.id
                   ? "bg-slate-800 text-white border-slate-800"
                   : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
@@ -56,7 +56,7 @@ export default function ContactSelector({
         ))}
         <button
           onClick={onAdd}
-          className="px-3 py-1.5 rounded-full text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-amber-400 hover:text-amber-500 transition-colors bg-white"
+          className="px-3 py-2.5 rounded-full text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-amber-400 hover:text-amber-500 transition-colors bg-white"
         >
           ＋ 相手を追加
         </button>

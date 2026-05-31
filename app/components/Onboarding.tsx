@@ -1,31 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import { useState } from "react";
 import type { Profile, ProfileFormData, ProfileOutput } from "../types";
-
-// Lottie はクライアントのみ（SSR除外）
-const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
-
-const LOTTIE_URL = "/sparkle.json";
-
-function LottieHero() {
-  const [data, setData] = useState<unknown>(null);
-  useEffect(() => {
-    fetch(LOTTIE_URL)
-      .then((r) => r.json())
-      .then((json) => setData(json))
-      .catch(() => {}); // 取得失敗しても表示に影響なし
-  }, []);
-  if (!data) return <div style={{ height: 180 }} />;
-  return (
-    <Lottie
-      animationData={data}
-      loop
-      autoplay
-      style={{ height: 180, width: 180, margin: "0 auto" }}
-    />
-  );
-}
 
 const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
 

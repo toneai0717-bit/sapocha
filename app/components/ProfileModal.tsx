@@ -99,7 +99,7 @@ export default function ProfileModal({ profile, onFieldChange, onSave, onClose, 
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4">
-      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
         <h2 className="text-base font-semibold text-slate-900 mb-1">プロフィール設定</h2>
         <p className="text-xs text-slate-500 mb-4">入力した内容をもとに返信のキャラを合わせます。</p>
 

@@ -96,7 +96,7 @@ export const EMPTY_PROFILE: Profile = {
 };
 
 export function isTopicsResult(r: Result): r is TopicsResult {
-  return "topics" in r;
+  return "topics" in r && !("courses" in r);
 }
 
 export function isDateResult(r: Result): r is DateResult {
