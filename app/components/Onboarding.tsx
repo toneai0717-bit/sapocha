@@ -137,7 +137,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
             </div>
           </div>
 
-          <div className="flex items-center gap-3 mb-8 px-2">
+          <div className="flex items-center gap-3 mb-8">
             <div className="flex-1 h-px bg-amber-200" />
             <span className="text-sm font-bold text-amber-500 shrink-0">サポチャで全部解決！</span>
             <div className="flex-1 h-px bg-amber-200" />
@@ -160,7 +160,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
 
           {/* vs 汎用AI */}
           <div className="mb-10 text-left">
-            <div className="flex items-center gap-3 mb-3 px-2">
+            <div className="flex items-center gap-3 mb-3">
               <div className="flex-1 h-px bg-slate-200" />
               <span className="text-sm font-bold text-slate-500 shrink-0">ChatGPTとどう違うの？</span>
               <div className="flex-1 h-px bg-slate-200" />
