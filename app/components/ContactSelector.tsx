@@ -20,6 +20,11 @@ export default function ContactSelector({
 
   return (
     <div className="mb-4">
+      {contacts.length === 0 && (
+        <p className="text-xs text-slate-400 mb-2 leading-relaxed">
+          💡 気になる人を登録すると、会話の流れを記憶して毎回より自然な返信を提案できます
+        </p>
+      )}
       <div className="flex items-center gap-2 flex-wrap">
         {contacts.map((c) => (
           <div key={c.id} className="relative group flex items-center">

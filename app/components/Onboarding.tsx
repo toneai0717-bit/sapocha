@@ -4,7 +4,7 @@ import type { Profile, ProfileFormData, ProfileOutput } from "../types";
 
 const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
 
-type OnboardingStep = "welcome" | "howto" | "form" | "result";
+type OnboardingStep = "welcome" | "form" | "result";
 
 type FormState = ProfileFormData & { name: string; firstPerson: string; dialect: string; pets: string };
 
@@ -171,7 +171,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           </p>
 
           <button
-            onClick={() => setStep("howto")}
+            onClick={() => setStep("form")}
             className="w-full py-4 rounded-2xl font-bold text-base text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-lg mb-3"
           >
             無料ではじめる（約2分）
@@ -181,108 +181,6 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
             className="w-full py-3 text-sm text-slate-400 hover:text-slate-600 transition-colors"
           >
             プロフィール設定をスキップしてすぐ使う →
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ── STEP: HOW TO USE ───────────────────────────────────────────────
-  if (step === "howto") {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-stone-50 to-orange-50 flex flex-col items-center px-6 py-10 overflow-y-auto">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-black text-slate-900 mb-1">使い方ガイド</h2>
-            <p className="text-sm text-slate-400">4つの機能を使いこなそう</p>
-          </div>
-
-          <div className="space-y-3 mb-8">
-
-            {/* 返信サポート */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg" aria-hidden="true">💬</span>
-                <span className="text-sm font-bold text-slate-800">返信サポート</span>
-              </div>
-              <div className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-                <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-amber-100 text-amber-600 font-bold flex items-center justify-center text-[10px]">1</span>
-                <span>トーク画面をスクリーンショット</span>
-              </div>
-              <div className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed mt-1">
-                <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-amber-100 text-amber-600 font-bold flex items-center justify-center text-[10px]">2</span>
-                <span>貼り付けるか、画像をアップロード</span>
-              </div>
-              <div className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed mt-1">
-                <span className="shrink-0 mt-0.5 w-4 h-4 rounded-full bg-amber-100 text-amber-600 font-bold flex items-center justify-center text-[10px]">3</span>
-                <span>返信案が3つ届く。コピーして送るだけ！</span>
-              </div>
-              <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-2.5 py-1.5 mt-2.5">
-                💡 テキストモードなら会話内容をそのまま貼り付けでもOK
-              </p>
-            </div>
-
-            {/* 相手を追加 */}
-            <div className="bg-white rounded-2xl border border-amber-300 p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg" aria-hidden="true">👤</span>
-                <span className="text-sm font-bold text-slate-800">相手を追加する（重要！）</span>
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600">おすすめ</span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed mb-2">
-                画面上部の <span className="font-bold text-slate-700">「＋ 相手を追加」</span> で、やりとりしてる人を登録できます。
-              </p>
-              <div className="space-y-1">
-                <div className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-                  <span className="shrink-0">✓</span>
-                  <span>相手を選んだ状態で使うと、<span className="font-semibold text-slate-700">会話の流れを記憶</span>してくれる</span>
-                </div>
-                <div className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-                  <span className="shrink-0">✓</span>
-                  <span>「この前話したこと」を踏まえた自然な返信を提案</span>
-                </div>
-                <div className="flex items-start gap-2 text-xs text-slate-500 leading-relaxed">
-                  <span className="shrink-0">✓</span>
-                  <span>複数人の相手を管理できる</span>
-                </div>
-              </div>
-            </div>
-
-            {/* デートサポート */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg" aria-hidden="true">🗓</span>
-                <span className="text-sm font-bold text-slate-800">デートサポート</span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                エリア・時間帯・相手の好み・予算を入力するだけで、デートコースを3パターン＋当日の話題をまとめて提案します。
-              </p>
-            </div>
-
-            {/* 写真診断 */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg" aria-hidden="true">📷</span>
-                <span className="text-sm font-bold text-slate-800">写真診断</span>
-              </div>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                プロフィール写真をアップすると「1枚目向き」「サブ向き」を判定。スコアとアドバイス付きで教えてくれます。
-              </p>
-            </div>
-
-          </div>
-
-          <button
-            onClick={() => setStep("form")}
-            className="w-full py-4 rounded-2xl font-bold text-base text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-lg mb-3"
-          >
-            自分のことを設定する →
-          </button>
-          <button
-            onClick={onSkip}
-            className="w-full py-3 text-sm text-slate-400 hover:text-slate-600 transition-colors"
-          >
-            スキップしてすぐ使う →
           </button>
         </div>
       </div>
