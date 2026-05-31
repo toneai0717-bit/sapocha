@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Profile, ProfileFormData, ProfileOutput } from "../types";
 
 const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
@@ -380,12 +380,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
           )}
         </div>
 
-        {loading && (
-          <div className="text-center py-20">
-            <div className="text-5xl mb-5">✨</div>
-            <p className="text-sm text-slate-400">あなたらしいプロフィール文を考えています...</p>
-          </div>
-        )}
+        {loading && <LoadingAnimation />}
 
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
@@ -426,6 +421,52 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
             {profiles.length > 0 ? "保存してメイン画面へ →" : "メイン画面へ →"}
           </button>
         )}
+      </div>
+    </div>
+  );
+}
+
+const LOADING_MESSAGES = [
+  "あなたの趣味を分析しています...",
+  "話し方のクセを学習しています...",
+  "魅力的なフレーズを考えています...",
+  "あなたらしい表現を磨いています...",
+  "マッチング率を高める文章を生成中...",
+  "もうすぐできあがります...",
+];
+
+function LoadingAnimation() {
+  const [msgIndex, setMsgIndex] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setMsgIndex((i) => (i + 1) % LOADING_MESSAGES.length);
+        setFade(true);
+      }, 300);
+    }, 2200);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="text-center py-20">
+      <div className="text-5xl mb-5 animate-bounce">✨</div>
+      <div
+        className="text-sm text-slate-400 transition-opacity duration-300"
+        style={{ opacity: fade ? 1 : 0 }}
+      >
+        {LOADING_MESSAGES[msgIndex]}
+      </div>
+      <div className="flex justify-center gap-1.5 mt-6">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="w-1.5 h-1.5 rounded-full bg-amber-400"
+            style={{ animation: `bounce 1.2s ease-in-out ${i * 0.2}s infinite` }}
+          />
+        ))}
       </div>
     </div>
   );

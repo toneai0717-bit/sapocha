@@ -331,8 +331,9 @@ export default function Home() {
                   サポ<span className="text-amber-500">チャ</span>
                 </Link>
               </h1>
-              <p className="mt-0.5 text-slate-700 text-sm font-medium leading-relaxed">
-                会うまでは、全部サポート。
+              <p className="mt-0.5 text-slate-700 text-sm font-medium leading-snug">
+                会うまでは、全部サポート。<br />
+                <span className="text-slate-400 text-xs">その先は、君の番。</span>
               </p>
             </div>
             <div className="flex flex-col items-end gap-1.5 mt-1">
