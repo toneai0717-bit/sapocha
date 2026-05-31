@@ -169,7 +169,7 @@ export default function Onboarding({ storedKey, onComplete, onSkip }: Onboarding
             onClick={onSkip}
             className="w-full py-3 text-sm text-slate-400 hover:text-slate-600 transition-colors"
           >
-            スキップして使ってみる →
+            プロフィール設定をスキップしてすぐ使う →
           </button>
         </div>
       </div>
