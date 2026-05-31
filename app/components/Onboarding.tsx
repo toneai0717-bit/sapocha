@@ -66,6 +66,7 @@ const DEV_TEST_DATA: FormState = {
   weekends: "フットサル、山登り、公園散歩、お風呂で映画鑑賞",
   strengths: "お風呂で映画を見る技術（入浴剤＋防水スマホで最高の環境を構築済み）",
   idealPartner: "前向きな方、笑顔が多い方、好奇心旺盛な方",
+  pets: "犬も猫も大好きです",
   app: "Omiai",
 };
 
