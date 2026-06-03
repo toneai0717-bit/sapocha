@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Smartphone, Target } from "lucide-react";
 import type { ProfileFormData } from "../types";
 
 const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
@@ -32,7 +33,7 @@ export default function ProfileForm({ onSubmit, loading, hasResult }: ProfileFor
     <div className="space-y-4 mb-4">
       {/* アプリ選択 */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 mb-1.5">📱 使うアプリ</label>
+        <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><Smartphone className="w-3.5 h-3.5" aria-hidden="true" />使うアプリ</label>
         <div className="flex gap-2 flex-wrap">
           {APP_OPTIONS.map((a) => (
             <button
@@ -86,9 +87,10 @@ export default function ProfileForm({ onSubmit, loading, hasResult }: ProfileFor
 
       {/* 趣味・好きなこと */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-          🎯 趣味・好きなこと
-          <span className="text-amber-500 ml-1">← ここが一番大事！具体的に書くほど良くなります</span>
+        <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5">
+          <Target className="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
+          趣味・好きなこと
+          <span className="text-amber-500">ここが一番大事！具体的に書くほど良くなります</span>
         </label>
         <textarea
           value={form.hobbies}

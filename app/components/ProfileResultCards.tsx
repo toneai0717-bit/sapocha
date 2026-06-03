@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Check, MessageCircle } from "lucide-react";
 import type { ProfileOutput } from "../types";
 
 interface ProfileResultCardsProps {
@@ -62,16 +63,18 @@ export default function ProfileResultCards({ profiles, onSave, savedText }: Prof
                     setSavedIndex(i);
                     setTimeout(() => setSavedIndex(null), 2000);
                   }}
-                  className="text-xs text-slate-400 hover:text-green-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-green-50 active:bg-green-100"
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-green-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-green-50 active:bg-green-100"
                 >
-                  {savedIndex === i ? "✓ 保存済み" : "保存する"}
+                  {savedIndex === i && <Check className="w-3 h-3" aria-hidden="true" />}
+                  {savedIndex === i ? "保存済み" : "保存する"}
                 </button>
               )}
               <button
                 onClick={() => copy(editedTexts[i] ?? profile.text, i)}
-                className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-white/60 active:bg-white"
+                className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-white/60 active:bg-white"
               >
-                {copiedIndex === i ? "✓ コピー済み" : "コピー"}
+                {copiedIndex === i && <Check className="w-3 h-3" aria-hidden="true" />}
+                {copiedIndex === i ? "コピー済み" : "コピー"}
               </button>
             </div>
           </div>
@@ -101,7 +104,7 @@ export default function ProfileResultCards({ profiles, onSave, savedText }: Prof
           {/* 話しかけやすいポイント */}
           {profile.hooks.length > 0 && (
             <div className="mt-3 pt-3 border-t border-white/60">
-              <p className="text-xs font-semibold text-slate-500 mb-1.5">💬 話しかけやすいポイント</p>
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><MessageCircle className="w-3.5 h-3.5" aria-hidden="true" />話しかけやすいポイント</p>
               <div className="flex flex-wrap gap-1.5">
                 {profile.hooks.map((hook, j) => (
                   <span key={j} className="text-xs bg-white/70 text-slate-600 px-2 py-1 rounded-lg border border-white/80">

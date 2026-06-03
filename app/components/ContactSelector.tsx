@@ -1,4 +1,5 @@
 "use client";
+import { Lightbulb, Pencil, Plus } from "lucide-react";
 import type { Contact } from "../types";
 
 interface ContactSelectorProps {
@@ -21,8 +22,9 @@ export default function ContactSelector({
   return (
     <div className="mb-4">
       {contacts.length === 0 && (
-        <p className="text-xs text-slate-400 mb-2 leading-relaxed">
-          💡 気になる人を登録すると、会話の流れを記憶して毎回より自然な返信を提案できます
+        <p className="flex items-start gap-1.5 text-xs text-slate-400 mb-2 leading-relaxed">
+          <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+          <span>気になる人を登録すると、会話の流れを記憶して毎回より自然な返信を提案できます</span>
         </p>
       )}
       <div className="flex items-center gap-2 flex-wrap">
@@ -38,32 +40,35 @@ export default function ContactSelector({
             >
               {c.name}
               {c.situationHistory.length > 0 && (
-                <span className={`ml-1 text-xs ${selectedContactId === c.id ? "text-amber-300" : "text-amber-400"}`}>
-                  ●
-                </span>
+                <span
+                  className={`ml-1.5 inline-block w-1.5 h-1.5 rounded-full align-middle ${selectedContactId === c.id ? "bg-amber-300" : "bg-amber-400"}`}
+                  aria-hidden="true"
+                />
               )}
               {c.profile && (
-                <span className={`ml-1 text-xs ${selectedContactId === c.id ? "text-blue-300" : "text-blue-400"}`}>
-                  i
-                </span>
+                <span
+                  className={`ml-1 inline-block w-1.5 h-1.5 rounded-full align-middle ${selectedContactId === c.id ? "bg-blue-300" : "bg-blue-400"}`}
+                  aria-hidden="true"
+                />
               )}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(c); }}
-              className={`absolute right-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center text-xs transition-colors ${
+              className={`absolute right-0 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
                 selectedContactId === c.id ? "text-slate-400 hover:text-white" : "text-slate-300 hover:text-slate-500"
               }`}
               aria-label={`${c.name}を編集`}
             >
-              ✎
+              <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           </div>
         ))}
         <button
           onClick={onAdd}
-          className="px-3 py-2.5 rounded-full text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-amber-400 hover:text-amber-500 transition-colors bg-white"
+          className="inline-flex items-center gap-1 px-3 py-2.5 rounded-full text-xs font-semibold border border-dashed border-slate-300 text-slate-400 hover:border-amber-400 hover:text-amber-500 transition-colors bg-white"
         >
-          ＋ 相手を追加
+          <Plus className="w-3.5 h-3.5" aria-hidden="true" />
+          相手を追加
         </button>
       </div>
       {selectedContact && (

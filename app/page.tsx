@@ -2,6 +2,25 @@
 
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
+import {
+  MessageCircle,
+  CalendarDays,
+  Camera,
+  Settings,
+  Heart,
+  UserPlus,
+  ArrowUp,
+  Plus,
+  Mail,
+  Type,
+  Flame,
+  MapPin,
+  Clock,
+  Timer,
+  Gift,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import ProfileModal from "./components/ProfileModal";
 import AddContactModal from "./components/AddContactModal";
 import EditContactModal from "./components/EditContactModal";
@@ -34,10 +53,10 @@ import {
   formatProfileForPrompt,
 } from "./types";
 
-const MAIN_MODES: { key: FeatureMode; label: string; icon: string }[] = [
-  { key: "reply",  label: "返信サポート", icon: "💬" },
-  { key: "date",   label: "デートサポート", icon: "🗓" },
-  { key: "photo",  label: "写真診断",     icon: "📷" },
+const MAIN_MODES: { key: FeatureMode; label: string; icon: LucideIcon }[] = [
+  { key: "reply",  label: "返信サポート", icon: MessageCircle },
+  { key: "date",   label: "デートサポート", icon: CalendarDays },
+  { key: "photo",  label: "写真診断",     icon: Camera },
 ];
 
 function buildAnalyzeBody(params: {
@@ -353,7 +372,7 @@ export default function Home() {
                 onClick={() => { resetProfileDraft(); setShowProfile(true); }}
                 className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-amber-600 transition-colors bg-white hover:bg-amber-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
               >
-                <span aria-hidden="true">⚙</span>
+                <Settings className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>プロフィール設定</span>
                 {hasProfile(savedProfile) && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" aria-hidden="true" />}
               </button>
@@ -361,7 +380,7 @@ export default function Home() {
                 onClick={() => setShowFavorites(true)}
                 className="relative flex items-center gap-1.5 text-xs text-slate-500 hover:text-rose-500 transition-colors bg-white hover:bg-rose-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm"
               >
-                <span aria-hidden="true">{favorites.length > 0 ? "♥" : "♡"}</span>
+                <Heart className={`w-3.5 h-3.5 ${favorites.length > 0 ? "fill-rose-500 text-rose-500" : ""}`} aria-hidden="true" />
                 <span>お気に入り</span>
                 {favorites.length > 0 && (
                   <span className="w-4 h-4 rounded-full bg-rose-400 text-white text-[10px] font-bold flex items-center justify-center leading-none">
@@ -423,14 +442,17 @@ export default function Home() {
         {/* 相手未登録 → 追加を促す */}
         {contacts.length === 0 && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-5 text-center">
-            <p className="text-2xl mb-2">👩</p>
+            <div className="w-11 h-11 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-2.5" aria-hidden="true">
+              <UserPlus className="w-5 h-5" />
+            </div>
             <p className="text-sm font-bold text-slate-700 mb-1">まず気になる相手を登録しよう</p>
             <p className="text-xs text-slate-400 mb-3">プロフィールを登録すると、ファーストメッセージから返信まで一貫してサポートできます</p>
             <button
               onClick={() => setShowAddContact(true)}
-              className="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-amber-500 hover:bg-amber-400 transition-colors shadow-sm"
             >
-              ＋ 相手を追加する
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              相手を追加する
             </button>
           </div>
         )}
@@ -438,24 +460,27 @@ export default function Home() {
         {/* 相手登録済みだが未選択 → 選択を促す */}
         {contacts.length > 0 && !selectedContactId && (
           <div className="mb-4 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-4 text-center">
-            <p className="text-xs font-semibold text-slate-500 mb-1">👆 上から相手を選んでください</p>
+            <p className="flex items-center justify-center gap-1.5 text-xs font-semibold text-slate-500 mb-1">
+              <ArrowUp className="w-3.5 h-3.5" aria-hidden="true" />
+              上から相手を選んでください
+            </p>
             <p className="text-xs text-slate-400">選択するとその子に合わせたサポートができます</p>
           </div>
         )}
 
         {/* Feature mode selector */}
         <div className={`flex gap-1.5 mb-3 transition-opacity ${!selectedContactId ? "opacity-40 pointer-events-none" : ""}`}>
-          {MAIN_MODES.map(({ key, label, icon }) => (
+          {MAIN_MODES.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => { setFeatureMode(key); setResult(null); setError(null); clearImages(); setIsFirstMessage(false); }}
-              className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                 featureMode === key
                   ? "bg-amber-500 text-white border-amber-500 shadow-sm"
                   : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
               }`}
             >
-              <span aria-hidden="true">{icon}</span> {label}
+              <Icon className="w-4 h-4" aria-hidden="true" /> {label}
             </button>
           ))}
         </div>
@@ -464,13 +489,14 @@ export default function Home() {
         {featureMode === "reply" && selectedContactId && (
           <button
             onClick={() => { setIsFirstMessage(!isFirstMessage); setResult(null); setError(null); clearImages(); }}
-            className={`w-full mb-3 py-2.5 rounded-xl text-sm font-bold border transition-colors ${
+            className={`w-full mb-3 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold border transition-colors ${
               isFirstMessage
                 ? "bg-amber-500 text-white border-amber-500 shadow-sm"
                 : "bg-white text-slate-500 border-slate-200 hover:border-amber-300"
             }`}
           >
-            💌 ファーストメッセージを作る {isFirstMessage ? "ON" : "OFF"}
+            <Mail className="w-4 h-4" aria-hidden="true" />
+            ファーストメッセージを作る {isFirstMessage ? "ON" : "OFF"}
           </button>
         )}
 
@@ -480,7 +506,7 @@ export default function Home() {
             <label className="block text-xs font-semibold text-slate-500 mb-1.5">
               相手のプロフィール情報（任意）
               {getSelectedContact()?.profile && (
-                <span className="ml-2 text-amber-500 font-normal">← {getSelectedContact()?.name}のプロフィールを反映中</span>
+                <span className="ml-2 text-amber-500 font-normal">{getSelectedContact()?.name}のプロフィールを反映中</span>
               )}
             </label>
             <textarea
@@ -507,11 +533,13 @@ export default function Home() {
               <button
                 key={m}
                 onClick={() => { setMode(m); setResult(null); setError(null); }}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
                   mode === m ? "bg-amber-500 text-white shadow-sm" : "text-slate-500 hover:text-slate-700"
                 }`}
               >
-                {m === "image" ? "📸 スクショ" : "✏️ テキスト"}
+                {m === "image"
+                  ? <><Camera className="w-4 h-4" aria-hidden="true" /> スクショ</>
+                  : <><Type className="w-4 h-4" aria-hidden="true" /> テキスト</>}
               </button>
             ))}
           </div>
@@ -521,18 +549,19 @@ export default function Home() {
         {featureMode === "reply" && !isFirstMessage && selectedContactId && (
           <div className="flex gap-2 mb-4">
             {(["自然", "盛り上げる", "積極的"] as const).map((t) => {
-              const icons: Record<Tone, string> = { "自然": "💬", "盛り上げる": "🔥", "積極的": "💘" };
+              const icons: Record<Tone, LucideIcon> = { "自然": MessageCircle, "盛り上げる": Flame, "積極的": Heart };
+              const ToneIcon = icons[t];
               return (
                 <button
                   key={t}
                   onClick={() => { setTone(t); setResult(null); }}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold border transition-colors ${
                     tone === t
                       ? "bg-slate-800 text-white border-slate-800"
                       : "bg-white text-slate-500 border-slate-200 hover:border-slate-400"
                   }`}
                 >
-                  <span aria-hidden="true">{icons[t]}</span> {t}
+                  <ToneIcon className="w-3.5 h-3.5" aria-hidden="true" /> {t}
                 </button>
               );
             })}
@@ -543,7 +572,7 @@ export default function Home() {
         {featureMode === "date" && selectedContactId && (
           <div className="space-y-3 mb-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5">📅 何回目のデート？</label>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><CalendarDays className="w-3.5 h-3.5" aria-hidden="true" />何回目のデート？</label>
               <div className="flex gap-2">
                 {(["1回目", "2回目", "3回目以降"] as const).map((d) => (
                   <button key={d} onClick={() => setDateNumber(d)}
@@ -554,13 +583,13 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5">📍 エリア</label>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><MapPin className="w-3.5 h-3.5" aria-hidden="true" />エリア</label>
               <input type="text" value={area} onChange={(e) => { setArea(e.target.value); setResult(null); }}
                 placeholder="例：梅田、渋谷、名古屋"
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5">🕐 時間帯</label>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><Clock className="w-3.5 h-3.5" aria-hidden="true" />時間帯</label>
               <div className="flex gap-2">
                 {["昼", "夕方", "夜"].map((t) => (
                   <button key={t} onClick={() => setDateTime(t)}
@@ -571,7 +600,7 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5">⏱ デートの長さ</label>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><Timer className="w-3.5 h-3.5" aria-hidden="true" />デートの長さ</label>
               <div className="flex gap-2">
                 {["ランチのみ", "半日", "一日"].map((d) => (
                   <button key={d} onClick={() => setDateDuration(d)}
@@ -582,13 +611,13 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5">💝 相手の好きなもの・こと</label>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><Gift className="w-3.5 h-3.5" aria-hidden="true" />相手の好きなもの・こと</label>
               <input type="text" value={dateInterests} onChange={(e) => { setDateInterests(e.target.value); setResult(null); }}
                 placeholder="例：カフェ巡り、映画、アウトドア"
                 className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 shadow-sm" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5">💰 予算（おひとり様）</label>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><Wallet className="w-3.5 h-3.5" aria-hidden="true" />予算（おひとり様）</label>
               <div className="flex gap-2 flex-wrap">
                 {["〜3,000円", "〜5,000円", "〜10,000円", "それ以上"].map((b) => (
                   <button key={b} onClick={() => setDateBudget(b)}
@@ -599,7 +628,7 @@ export default function Home() {
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1.5">📸 相手のスクショ（任意・話題の精度が上がります）</label>
+              <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 mb-1.5"><Camera className="w-3.5 h-3.5" aria-hidden="true" />相手のスクショ（任意・話題の精度が上がります）</label>
               <ImageDropzone
                 previews={previews}
                 onAddFile={handleFile}
@@ -617,14 +646,15 @@ export default function Home() {
         {/* Photo mode */}
         {featureMode === "photo" && selectedContactId && (
           <>
-            <p className="text-xs text-slate-500 mb-3 bg-white border border-slate-200 rounded-xl px-3 py-2.5 shadow-sm">
-              📷 プロフィール用の写真をアップロードしてください。1枚ずつ、または複数枚まとめて診断できます。
+            <p className="flex items-start gap-1.5 text-xs text-slate-500 mb-3 bg-white border border-slate-200 rounded-xl px-3 py-2.5 shadow-sm">
+              <Camera className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+              <span>プロフィール用の写真をアップロードしてください。1枚ずつ、または複数枚まとめて診断できます。</span>
             </p>
             <ImageDropzone
               previews={previews}
               onAddFile={handleFile}
               onRemove={removePreview}
-              icon="📷"
+              icon={Camera}
               emptyLabel="タップして写真を選ぶ"
               emptyHint="複数枚・ドラッグ&ドロップでも可"
             />

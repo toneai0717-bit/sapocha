@@ -1,4 +1,5 @@
 "use client";
+import { Lightbulb, TriangleAlert, Heart } from "lucide-react";
 import { type DateResult, type DateCourse } from "../types";
 
 interface DateResultsProps {
@@ -18,7 +19,7 @@ export default function DateResults({ result, onToggleSave, isSaved }: DateResul
         <>
           <div className="flex items-center gap-3 mt-2">
             <div className="flex-1 h-px bg-amber-200" />
-            <span className="text-xs font-bold text-amber-500 shrink-0">💡 当日の話題</span>
+            <span className="flex items-center gap-1.5 text-xs font-bold text-amber-500 shrink-0"><Lightbulb className="w-3.5 h-3.5" aria-hidden="true" />当日の話題</span>
             <div className="flex-1 h-px bg-amber-200" />
           </div>
           {result.topics.map((topic, i) => (
@@ -33,8 +34,9 @@ export default function DateResults({ result, onToggleSave, isSaved }: DateResul
         </>
       )}
 
-      <p className="text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-        ⚠️ 店名はAIが提案したものです。実際に行く前にGoogle マップで存在を確認してください。
+      <p className="flex items-start gap-1.5 text-xs text-slate-400 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+        <TriangleAlert className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+        <span>店名はAIが提案したものです。実際に行く前にGoogle マップで存在を確認してください。</span>
       </p>
 
       {result.courses.map((course, i) => {
@@ -47,10 +49,10 @@ export default function DateResults({ result, onToggleSave, isSaved }: DateResul
                 <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">{course.point}</span>
                 <button
                   onClick={() => onToggleSave(course)}
-                  className={`text-base px-1.5 py-0.5 rounded-lg transition-colors ${saved ? "text-rose-400 hover:text-rose-500" : "text-slate-300 hover:text-rose-400"}`}
+                  className={`px-1.5 py-0.5 rounded-lg transition-colors ${saved ? "text-rose-400 hover:text-rose-500" : "text-slate-300 hover:text-rose-400"}`}
                   aria-label={saved ? "お気に入りから削除" : "お気に入りに追加"}
                 >
-                  {saved ? "♥" : "♡"}
+                  <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} aria-hidden="true" />
                 </button>
               </div>
             </div>

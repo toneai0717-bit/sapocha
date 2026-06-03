@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { Camera, X, Plus, type LucideIcon } from "lucide-react";
 
 const MAX_IMAGES = 5;
 
@@ -8,7 +9,7 @@ interface ImageDropzoneProps {
   previews: string[];
   onAddFile: (file: File) => void;
   onRemove: (index: number) => void;
-  icon?: string;
+  icon?: LucideIcon;
   emptyLabel: string;
   emptyHint?: string;
 }
@@ -17,7 +18,7 @@ export default function ImageDropzone({
   previews,
   onAddFile,
   onRemove,
-  icon = "📸",
+  icon: Icon = Camera,
   emptyLabel,
   emptyHint,
 }: ImageDropzoneProps) {
@@ -58,10 +59,10 @@ export default function ImageDropzone({
               />
               <button
                 onClick={() => onRemove(i)}
-                className="absolute -top-3 -right-3 w-11 h-11 bg-slate-700 text-white rounded-full text-sm flex items-center justify-center hover:bg-red-500 transition-colors"
+                className="absolute -top-3 -right-3 w-11 h-11 bg-slate-700 text-white rounded-full flex items-center justify-center hover:bg-red-500 transition-colors"
                 aria-label="画像を削除"
               >
-                ×
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           ))}
@@ -87,13 +88,13 @@ export default function ImageDropzone({
           />
           <div className="text-center">
             <div
-              className={`rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-2 ${previews.length > 0 ? "w-10 h-10 text-xl" : "w-16 h-16 text-3xl"}`}
+              className={`rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-2 ${previews.length > 0 ? "w-10 h-10" : "w-16 h-16"}`}
               aria-hidden="true"
             >
-              {icon}
+              <Icon className={previews.length > 0 ? "w-5 h-5" : "w-7 h-7"} />
             </div>
-            <p className="text-slate-600 text-sm font-medium">
-              {previews.length > 0 ? "＋ 追加する" : emptyLabel}
+            <p className="inline-flex items-center justify-center gap-1 text-slate-600 text-sm font-medium">
+              {previews.length > 0 ? <><Plus className="w-4 h-4" aria-hidden="true" />追加する</> : emptyLabel}
             </p>
             {previews.length === 0 && emptyHint && (
               <p className="text-slate-400 text-xs mt-1 hidden sm:block">{emptyHint}</p>

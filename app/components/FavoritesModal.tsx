@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Check, Heart, X } from "lucide-react";
 import { type Favorite, type FavoriteReply, type FavoriteDateCourse } from "../types";
 
 interface FavoritesModalProps {
@@ -45,9 +46,10 @@ function ReplyCard({ fav, onRemove }: { fav: FavoriteReply; onRemove: () => void
       <div className="flex gap-2">
         <button
           onClick={copy}
-          className="flex-1 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-amber-600 border border-slate-200 hover:border-amber-300 transition-colors"
+          className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-amber-600 border border-slate-200 hover:border-amber-300 transition-colors"
         >
-          {copied ? "✓ コピー済み" : "コピー"}
+          {copied && <Check className="w-3 h-3" aria-hidden="true" />}
+          {copied ? "コピー済み" : "コピー"}
         </button>
         <button
           onClick={onRemove}
@@ -111,15 +113,15 @@ export default function FavoritesModal({ favorites, onRemove, onClose }: Favorit
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{favorites.length}</span>
             )}
           </div>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors text-xl leading-none rounded-full hover:bg-slate-100">×</button>
+          <button onClick={onClose} aria-label="閉じる" className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors rounded-full hover:bg-slate-100"><X className="w-5 h-5" aria-hidden="true" /></button>
         </div>
 
         <div className="overflow-y-auto overscroll-contain p-4 space-y-3 flex-1">
           {favorites.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-3xl mb-3">♡</p>
+              <Heart className="w-9 h-9 text-slate-200 mx-auto mb-3" aria-hidden="true" />
               <p className="text-sm text-slate-400">まだ保存したものがありません</p>
-              <p className="text-xs text-slate-300 mt-1">返信案やデートコースの ♡ をタップして保存できます</p>
+              <p className="inline-flex items-center gap-1 text-xs text-slate-300 mt-1">返信案やデートコースの<Heart className="w-3 h-3" aria-hidden="true" />をタップして保存できます</p>
             </div>
           ) : (
             favorites.map((fav) =>

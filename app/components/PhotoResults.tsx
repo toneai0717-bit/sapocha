@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Check, X, Lightbulb } from "lucide-react";
 import { type PhotoResult } from "../types";
 
 interface PhotoResultsProps {
@@ -39,7 +40,7 @@ export default function PhotoResults({ result, previews }: PhotoResultsProps) {
               <div className="mb-2">
                 {photo.goods.map((g, j) => (
                   <p key={j} className="text-xs text-slate-600 flex items-start gap-1.5 mb-0.5">
-                    <span className="text-green-500 shrink-0">◎</span>{g}
+                    <Check className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" aria-hidden="true" />{g}
                   </p>
                 ))}
               </div>
@@ -48,13 +49,14 @@ export default function PhotoResults({ result, previews }: PhotoResultsProps) {
               <div className="mb-2">
                 {photo.bads.map((b, j) => (
                   <p key={j} className="text-xs text-slate-500 flex items-start gap-1.5 mb-0.5">
-                    <span className="text-red-400 shrink-0">✕</span>{b}
+                    <X className="w-3.5 h-3.5 text-red-400 mt-0.5 shrink-0" aria-hidden="true" />{b}
                   </p>
                 ))}
               </div>
             )}
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">
-              💡 {photo.advice}
+            <p className="flex items-start gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">
+              <Lightbulb className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+              <span>{photo.advice}</span>
             </p>
           </div>
         );

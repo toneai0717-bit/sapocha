@@ -1,4 +1,5 @@
 "use client";
+import { Heart, Check } from "lucide-react";
 import { type ReplyResult } from "../types";
 
 interface ReplyResultsProps {
@@ -37,16 +38,17 @@ export default function ReplyResults({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onToggleSave(currentText, reply.reason)}
-                  className={`text-base px-2 py-1 rounded-lg transition-colors ${saved ? "text-rose-400 hover:text-rose-500" : "text-slate-300 hover:text-rose-400"}`}
+                  className={`px-2 py-1 rounded-lg transition-colors ${saved ? "text-rose-400 hover:text-rose-500" : "text-slate-300 hover:text-rose-400"}`}
                   aria-label={saved ? "お気に入りから削除" : "お気に入りに追加"}
                 >
-                  {saved ? "♥" : "♡"}
+                  <Heart className={`w-4 h-4 ${saved ? "fill-current" : ""}`} aria-hidden="true" />
                 </button>
                 <button
                   onClick={() => onCopy(currentText, i)}
-                  className="text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-amber-50 active:bg-amber-100"
+                  className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-amber-600 transition-colors font-medium px-3 py-1.5 rounded-lg hover:bg-amber-50 active:bg-amber-100"
                 >
-                  {copiedIndex === i ? "✓ コピー済み" : "コピー"}
+                  {copiedIndex === i && <Check className="w-3 h-3" aria-hidden="true" />}
+                  {copiedIndex === i ? "コピー済み" : "コピー"}
                 </button>
               </div>
             </div>

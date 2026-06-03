@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { ClipboardList, Sparkles, Check } from "lucide-react";
 import type { Profile, ProfileOutput } from "../types";
 
 const APP_OPTIONS = ["Omiai", "Pairs", "with", "タップル", "Tinder", "その他"];
@@ -16,7 +17,7 @@ const FIELDS: { key: keyof Profile; label: string; placeholder: string; multilin
   { key: "weekends", label: "休日の過ごし方", placeholder: "山登り、カフェ巡り、家でまったり など" },
   { key: "strengths", label: "自慢・エピソード", placeholder: "料理が得意、旅行10カ国 など" },
   { key: "idealPartner", label: "理想の相手", placeholder: "一緒に笑える人、好奇心旺盛な人 など" },
-  { key: "pets", label: "🐾 犬・猫への好感度", placeholder: "例：犬も猫も大好き / 実家で柴犬を飼ってた / 猫派です" },
+  { key: "pets", label: "犬・猫への好感度", placeholder: "例：犬も猫も大好き / 実家で柴犬を飼ってた / 猫派です" },
   {
     key: "sampleReplies",
     label: "自分の返信サンプル（複数可）",
@@ -106,13 +107,14 @@ export default function ProfileModal({ profile, onFieldChange, onSave, onClose, 
         {/* プロフィール文セクション */}
         <div className="mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-amber-700">📋 プロフィール文</p>
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700"><ClipboardList className="w-3.5 h-3.5" aria-hidden="true" />プロフィール文</p>
             <button
               onClick={generate}
               disabled={generating}
-              className="text-xs font-semibold text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 px-3 py-1.5 rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 disabled:text-slate-400 px-3 py-1.5 rounded-lg transition-colors"
             >
-              {generating ? "生成中..." : generatedProfiles.length > 0 ? "✨ 再生成" : "✨ 生成する"}
+              {!generating && <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />}
+              {generating ? "生成中..." : generatedProfiles.length > 0 ? "再生成" : "生成する"}
             </button>
           </div>
 
@@ -129,13 +131,14 @@ export default function ProfileModal({ profile, onFieldChange, onSave, onClose, 
                     </span>
                     <button
                       onClick={() => useThisProfile(p.text, i)}
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
+                      className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors ${
                         pickedIndex === i
                           ? "bg-amber-500 text-white"
                           : "text-amber-600 hover:bg-amber-50 border border-amber-200"
                       }`}
                     >
-                      {pickedIndex === i ? "✓ 使用中" : "これを使う"}
+                      {pickedIndex === i && <Check className="w-3 h-3" aria-hidden="true" />}
+                      {pickedIndex === i ? "使用中" : "これを使う"}
                     </button>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-wrap">{p.text}</p>
@@ -153,9 +156,10 @@ export default function ProfileModal({ profile, onFieldChange, onSave, onClose, 
                 )}
                 <button
                   onClick={copyProfileText}
-                  className="text-xs text-amber-600 hover:text-amber-700 font-medium px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors ml-auto"
+                  className="inline-flex items-center gap-1 text-xs text-amber-600 hover:text-amber-700 font-medium px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors ml-auto"
                 >
-                  {copied ? "✓ コピー済み" : "コピー"}
+                  {copied && <Check className="w-3 h-3" aria-hidden="true" />}
+                  {copied ? "コピー済み" : "コピー"}
                 </button>
               </div>
               <textarea
@@ -167,7 +171,7 @@ export default function ProfileModal({ profile, onFieldChange, onSave, onClose, 
             </>
           ) : (
             generatedProfiles.length === 0 && !generating && (
-              <p className="text-xs text-slate-400">「✨ 生成する」でプロフィール文を作れます。</p>
+              <p className="inline-flex items-center gap-1 text-xs text-slate-400">「<Sparkles className="w-3 h-3" aria-hidden="true" />生成する」でプロフィール文を作れます。</p>
             )
           )}
         </div>

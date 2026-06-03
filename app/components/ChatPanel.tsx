@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { MessageCircle, ArrowUp } from "lucide-react";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -26,7 +27,7 @@ export default function ChatPanel({ messages, loading, onSend }: ChatPanelProps)
   return (
     <div className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-100">
-        <p className="text-xs font-semibold text-slate-500">💬 さらに相談する</p>
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-slate-500"><MessageCircle className="w-3.5 h-3.5" aria-hidden="true" />さらに相談する</p>
       </div>
 
       {messages.length > 0 && (
@@ -75,7 +76,7 @@ export default function ChatPanel({ messages, loading, onSend }: ChatPanelProps)
           className="shrink-0 w-10 h-10 rounded-xl bg-amber-500 hover:bg-amber-400 disabled:bg-slate-200 text-white flex items-center justify-center transition-colors"
           aria-label="送信"
         >
-          ↑
+          <ArrowUp className="w-5 h-5" aria-hidden="true" />
         </button>
       </div>
     </div>
